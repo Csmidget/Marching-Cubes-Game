@@ -15,17 +15,10 @@ public class NoiseMap3D
 
     public float Evaluate(Vector3 _point)
     {
-        return SampleNoise3D(_point);
-    }
-    
-    private float SampleNoise3D (Vector3 _pos)
-    {
-        float noiseValue = noise.Evaluate(_pos*frequency);
+        float noiseValue = noise.Evaluate(_point * frequency);
 
         noiseValue = (noiseValue + 1) * 0.5f;
 
         return noiseValue;
-    }
-    
-
+    }  
 }

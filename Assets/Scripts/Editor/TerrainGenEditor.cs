@@ -21,6 +21,10 @@ public class TerrainGenEditor : Editor
         {
             terrainGen.GenerateMap();
         }
+        if (GUILayout.Button("Reset"))
+        {
+            terrainGen.Reset();
+        }
     }
 
 }

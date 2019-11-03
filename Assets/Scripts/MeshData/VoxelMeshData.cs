@@ -1,57 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public class MeshGenerator
+public class VoxelMeshData : IMeshData
 {
-   public MeshData GenerateChunkMesh(ChunkData _chunk)
-    {
-        MeshData meshData = new MeshData();
-
-        for (int x = 0; x < _chunk.width; x++)
-        {
-            for (int y = 0; y < _chunk.height; y++)
-            {
-                for (int z = 0; z < _chunk.width; z++)
-                {
-                    if (_chunk[x, y, z] == 0.0f)
-                        continue;
-
-                    if (x + 1 >= _chunk.width || _chunk[x+1,y,z] == 0)
-                        meshData.AddSquare(new Vector3(x, y, z), new Vector3(1,0,0));
-                    if (x - 1 < 0 || _chunk[x - 1, y, z] == 0)
-                        meshData.AddSquare(new Vector3(x, y, z), new Vector3(-1, 0, 0));
-
-                    if (y + 1 >= _chunk.height || _chunk[x, y + 1, z] == 0)
-                        meshData.AddSquare(new Vector3(x, y, z), new Vector3(0, 1, 0));
-                    if (y - 1 < 0 || _chunk[x, y - 1, z] == 0)
-                        meshData.AddSquare(new Vector3(x, y, z), new Vector3(0, -1, 0));
-
-                    if (z + 1 >= _chunk.width || _chunk[x, y, z + 1] == 0)
-                        meshData.AddSquare(new Vector3(x, y, z), new Vector3(0, 0, 1));
-                    if (z - 1 < 0 || _chunk[x, y, z - 1] == 0)
-                        meshData.AddSquare(new Vector3(x, y, z), new Vector3(0, 0, -1));
-                }               
-            }
-        }
-        return meshData;
-    }
-}
-
-public class MeshData
-{
-    public List<Vector3> vertices;
-    public List<int> triangles;
-    public List<Vector2> uvs;
     public List<Vector3> normals;
 
     int verticesIndex;
 
-    public MeshData()
-    {
-        vertices = new List<Vector3>();
-        uvs = new List<Vector2>();
-        triangles = new List<int>();
+    public VoxelMeshData() :base()
+    { 
         normals = new List<Vector3>();
     }
 
@@ -111,7 +68,7 @@ public class MeshData
         verticesIndex += 4;
     }
 
-    public Mesh CreateMesh()
+    public override Mesh CreateMesh()
     {
         Mesh mesh = new Mesh();
         mesh.vertices = vertices.ToArray();
