@@ -1,1 +1,1 @@
-Marching Cubes Game
+In development project, generating terrain using marching cubes algorithm.
