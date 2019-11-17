@@ -6,7 +6,7 @@ public enum RenderType { Voxel, MarchingCubes }
 
 public abstract class IMeshGenerator
 {
-    public abstract void GenerateChunkMesh(TerrainChunk _chunkData);
+    public abstract void GenerateChunkMesh(in TerrainChunk _chunkData);
 }
 
 public static class MeshGeneratorFactory

@@ -16,23 +16,36 @@ public class TerrainChunk
     public int width;
     public int height;
     public int depth;
+    private int rawWidth;
+    private int rawHeight;
+    private int rawDepth;
+    public float clipValue;
 
     IMeshData meshData;
     MeshFilter meshFilter;
+    MeshCollider meshCollider;
 
-    public TerrainChunk(Vector3 _position, int _width, int _height, int _depth, Transform _parent, GameObject _chunkPrefab)
+
+    public TerrainChunk(Vector3 _position, int _width, int _height, int _depth,float _clipValue, Transform _parent, GameObject _chunkPrefab)
     {
-        terrainMap = new float[_width * _height * _depth];
         chunkPosition = _position;
         width = _width;
         height = _height;
         depth = _depth;
+        rawWidth = _width + 1;
+        rawHeight = _height + 1;
+        rawDepth = _depth + 1;
+        
+        terrainMap = new float[rawWidth * rawHeight * rawDepth];
+
+        clipValue = _clipValue;
         rawPosition = new Vector3(chunkPosition.x * width, chunkPosition.y * height, chunkPosition.z * depth);
 
         chunkObject = GameObject.Instantiate(_chunkPrefab, _parent);
         chunkObject.name = "Chunk " + chunkPosition;
         chunkObject.transform.position = rawPosition;
         meshFilter = chunkObject.GetComponent<MeshFilter>();
+        meshCollider = chunkObject.GetComponent<MeshCollider>();
     }
 
     /// <summary>
@@ -40,14 +53,15 @@ public class TerrainChunk
     /// </summary>
     public float this[int _x, int _y, int _z]
     {
-        get { return terrainMap[_x + width * _y + height * width * _z]; }
-        set { terrainMap[_x + width * _y + height * width * _z] = value; }
+        get { return terrainMap[_x + rawWidth * _y + rawHeight * rawWidth * _z]; }
+        set { terrainMap[_x + rawWidth * _y + rawHeight * rawWidth * _z] = value; }
     }
 
     public void SetMesh(IMeshData _meshData)
     {
         meshData = _meshData;
         meshFilter.sharedMesh = meshData.CreateMesh();
+        meshCollider.sharedMesh = meshData.CreateMesh();
     }
 
     public void Destroy()

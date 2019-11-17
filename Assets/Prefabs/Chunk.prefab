@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 9012460803460968408}
   - component: {fileID: 3087154203077785100}
   - component: {fileID: 4701425981658445589}
+  - component: {fileID: 2427676458316353290}
   m_Layer: 0
   m_Name: Chunk
   m_TagString: Untagged
@@ -78,4 +79,18 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4622274691877607373}
+  m_Mesh: {fileID: 0}
+--- !u!64 &2427676458316353290
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4622274691877607373}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 0
+  m_CookingOptions: 30
   m_Mesh: {fileID: 0}

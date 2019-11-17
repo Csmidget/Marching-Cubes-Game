@@ -33,7 +33,7 @@ public class TerrainGenerator : MonoBehaviour
     //Noise Offset
     public Vector3 offset;
     
-    [Range(1,6)]
+    [Range(0,6)]
     public int renderDistance = 1; //How many chunks around the players current chunk will be rendered.
     /////////////////////////
     #endregion
@@ -64,9 +64,6 @@ public class TerrainGenerator : MonoBehaviour
             {
                 for (int k = -renderDistance; k <= renderDistance ; k++)
                 {
-                    //if (Mathf.Abs(i) + Mathf.Abs(j) + Mathf.Abs(k) > renderDistance)
-                    //    continue;
-
                     Vector3 chunkOffset = new Vector3(i , j , k);
 
                     Vector3 chunkPos = viewerChunk + chunkOffset;
@@ -114,9 +111,6 @@ public class TerrainGenerator : MonoBehaviour
             {
                 for (int k = -renderDistance; k <= renderDistance; k++)
                 {
-                   // if (Mathf.Abs(i) + Mathf.Abs(j) + Mathf.Abs(k) > renderDistance)
-                   //     continue;
-
                     Vector3 chunkOffset = new Vector3(i, j, k);
 
                     Vector3 chunkPos = viewerChunk + chunkOffset;
@@ -139,7 +133,7 @@ public class TerrainGenerator : MonoBehaviour
 
     public TerrainChunk CreateChunk(Vector3 _chunkPosition)
     {
-        TerrainChunk chunk = new TerrainChunk(_chunkPosition, chunkWidth, chunkHeight, chunkDepth,transform,chunkPrefab);
+        TerrainChunk chunk = new TerrainChunk(_chunkPosition, chunkWidth, chunkHeight, chunkDepth, clipPercent, transform,chunkPrefab);
 
         GenerateChunk(chunk);
 
@@ -149,16 +143,13 @@ public class TerrainGenerator : MonoBehaviour
     public TerrainChunk GenerateChunk(TerrainChunk _chunk)
     {
         int i = 0;
-        for (int z = 0; z < chunkDepth; z++)
+        for (int z = 0; z < _chunk.depth+1; z++)
         {
-            for (int y = 0; y < chunkHeight; y++)
+            for (int y = 0; y < _chunk.height+1; y++)
             {
-                for (int x = 0; x < chunkWidth; x++)
+                for (int x = 0; x < _chunk.width+1; x++)
                 {
                     _chunk.terrainMap[i] = noiseMap.Evaluate(new Vector3(x, y, z) + offset + _chunk.rawPosition);
-
-                    if (_chunk.terrainMap[i] <= clipPercent)
-                        _chunk.terrainMap[i] = 0;
 
                     i++;
                 }
