@@ -17,12 +17,9 @@ public class MarchingCubesMeshData : IMeshData
 
         for (int i = 0; i < _triangles.Count; i++)
         {
-          //  Debug.Log("index: " + verticesIndex);
-          //  Debug.Log("before: " + _triangles[i]);
             _triangles[i] += verticesIndex;
-          //  Debug.Log("after: " + _triangles[i]);
         }
-       // Debug.Log(_triangles.Count);
+
         triangles.AddRange(_triangles);
 
         verticesIndex += _vertices.Count;

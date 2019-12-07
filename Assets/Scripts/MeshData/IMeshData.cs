@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class IMeshData
+public class IMeshData
 {
     public List<Vector3> vertices;
     public List<int> triangles;

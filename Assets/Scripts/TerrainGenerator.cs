@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 public class TerrainGenerator : MonoBehaviour
@@ -10,12 +11,11 @@ public class TerrainGenerator : MonoBehaviour
 
     public RenderType renderType;
 
-    [Range(0,32)]
-    public int chunkWidth = 2;
-    [Range(0, 32)]
-    public int chunkHeight = 2;
-    [Range(0, 32)]
-    public int chunkDepth = 2;
+    public ComputeShader shader;
+
+
+    const int chunkDims = 16;
+
 
     public Transform viewer;
     public GameObject chunkPrefab;
@@ -45,10 +45,17 @@ public class TerrainGenerator : MonoBehaviour
     Dictionary<Vector3,TerrainChunk> terrainData;
     List<TerrainChunk> visibleChunks;
 
+    //The chunk the viewer was in last update.
+    Vector3 previousViewerChunk;
+
     // Start is called before the first frame update
     public void GenerateMap()
     {
-        Vector3 viewerChunk = viewer == null ? Vector3.zero : new Vector3(Mathf.Round(viewer.position.x / chunkWidth), Mathf.Round(viewer.position.y / chunkHeight), Mathf.Round(viewer.position.z / chunkDepth));
+        Stopwatch stopwatch = new Stopwatch();
+
+        stopwatch.Start();
+        
+        Vector3 viewerChunk = viewer == null ? Vector3.zero : new Vector3(Mathf.Round(viewer.position.x / chunkDims), Mathf.Round(viewer.position.y / chunkDims), Mathf.Round(viewer.position.z / chunkDims));
 
         noiseMap = new NoiseMap3D(seed,frequency);
         visibleChunks = new List<TerrainChunk>();
@@ -57,6 +64,8 @@ public class TerrainGenerator : MonoBehaviour
             terrainData = new Dictionary<Vector3, TerrainChunk>();
 
         meshGenerator = MeshGeneratorFactory.Create(renderType);
+        meshGenerator.Init(shader, clipPercent, chunkDims);
+
 
         for (int i = -renderDistance; i <= renderDistance; i++)
         {
@@ -81,7 +90,12 @@ public class TerrainGenerator : MonoBehaviour
                     visibleChunks.Add(chunk);
                 }               
             }
-        }     
+        }
+
+        stopwatch.Stop();
+
+        UnityEngine.Debug.Log("Time to generate " + Mathf.Pow(renderDistance * 2, 3)  + " chunks: " + stopwatch.Elapsed);
+
     }
 
     public void Start()
@@ -92,12 +106,15 @@ public class TerrainGenerator : MonoBehaviour
 
     public void Update()
     {
-        UpdateMap();
+        UpdateVisibleChunks();
     }
 
-    public void UpdateMap()
+    public void UpdateVisibleChunks()
     {
-        Vector3 viewerChunk = viewer == null ? Vector3.zero : new Vector3(Mathf.Round(viewer.position.x / chunkWidth), Mathf.Round(viewer.position.y / chunkHeight), Mathf.Round(viewer.position.z / chunkDepth));
+        Vector3 viewerChunk = viewer == null ? Vector3.zero : new Vector3(Mathf.Round(viewer.position.x / chunkDims), Mathf.Round(viewer.position.y / chunkDims), Mathf.Round(viewer.position.z / chunkDims));
+
+        if (viewerChunk == previousViewerChunk)
+            return;
 
         for (int i = 0; i < visibleChunks.Count; i++)
         {
@@ -125,15 +142,17 @@ public class TerrainGenerator : MonoBehaviour
                         terrainData[chunkPos].SetVisible(true);
                         visibleChunks.Add(terrainData[chunkPos]);
                     }
-
+                    
                 }
             }
         }
+
+        previousViewerChunk = viewerChunk;
     }
 
     public TerrainChunk CreateChunk(Vector3 _chunkPosition)
     {
-        TerrainChunk chunk = new TerrainChunk(_chunkPosition, chunkWidth, chunkHeight, chunkDepth, clipPercent, transform,chunkPrefab);
+        TerrainChunk chunk = new TerrainChunk(_chunkPosition, chunkDims, clipPercent, transform,chunkPrefab);
 
         GenerateChunk(chunk);
 
@@ -143,14 +162,14 @@ public class TerrainGenerator : MonoBehaviour
     public TerrainChunk GenerateChunk(TerrainChunk _chunk)
     {
         int i = 0;
-        for (int z = 0; z < _chunk.depth+1; z++)
+        for (int z = 0; z < _chunk.dims + 1; z++)
         {
-            for (int y = 0; y < _chunk.height+1; y++)
+            for (int y = 0; y < _chunk.dims + 1; y++)
             {
-                for (int x = 0; x < _chunk.width+1; x++)
+                for (int x = 0; x < _chunk.dims + 1; x++)
                 {
                     _chunk.terrainMap[i] = noiseMap.Evaluate(new Vector3(x, y, z) + offset + _chunk.rawPosition);
-
+                    _chunk.clipValue = clipPercent;
                     i++;
                 }
             }
@@ -179,29 +198,5 @@ public class TerrainGenerator : MonoBehaviour
                 DestroyImmediate(child.gameObject);
             }
         }
-    }
-
-    /// <summary>
-    /// Debug temp.
-    /// </summary>
-    private void OnDrawGizmos()
-    {
-    //    if (terrainData != null)
-    //    {
-    //        int i = 0;
-    //        for (int z = 0; z < chunkWidth; z++)
-    //        {
-    //            for (int y = 0; y < chunkHeight; y++)
-    //            {
-    //                for (int x = 0; x < chunkWidth; x++)
-    //                {                    
-    //                    Gizmos.color = Color.Lerp(Color.white, Color.black, Mathf.InverseLerp(minNoise,maxNoise, terrainData.terrainMap[i]));
-    //                    if (terrainData.terrainMap[i] / maxNoise * 100 > clipPercent)
-    //                        Gizmos.DrawSphere(transform.position + new Vector3(x, y, z),Mathf.InverseLerp(((float)clipPercent)/100.0f,maxNoise, terrainData.terrainMap[i]) /2 );
-    //                    i++;
-    //                }
-    //            }
-    //        }
-    //    }
     }
 }

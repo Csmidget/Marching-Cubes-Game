@@ -10,13 +10,14 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
     {
         MarchingCubesMeshData meshData = new MarchingCubesMeshData();
 
-        Vector3 centerOffset = new Vector3(_chunk.width / 2.0f, _chunk.height / 2.0f, _chunk.depth / 2.0f);
+        float halfDims = _chunk.dims / 2.0f;
+        Vector3 centerOffset = new Vector3(halfDims, halfDims, halfDims);
 
-        for (int x = 0; x < _chunk.width; x++)
+        for (int x = 0; x < _chunk.dims; x++)
         {
-            for (int y = 0; y < _chunk.height; y++)
+            for (int y = 0; y < _chunk.dims; y++)
             {
-                for (int z = 0; z < _chunk.depth; z++)
+                for (int z = 0; z < _chunk.dims; z++)
                 {
                     int cubeIndex = GetCubeIndex(_chunk, x, y, z);
                     
@@ -26,7 +27,6 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
                         continue;
                     
                     Vector3[] vertList = new Vector3[12];
-                    float strength = Mathf.InverseLerp(_chunk.clipValue, 1, _chunk[x, y, z]);
 
                     /* Find the vertices where the surface intersects the cube */
                     if ((edgeTableVal & 1) > 0)
@@ -65,11 +65,13 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
 
                     meshData.AddMarchingCube(vertices, triangles);
                 }
-            }
+            }                
         }
 
         _chunk.SetMesh(meshData);
     }
+
+    public override void Init(ComputeShader _shader, float clipValue, int dims) {; }
 
     private Vector3 InterpolateBetweenMCubePoints(in TerrainChunk _chunk, int _p1x, int _p1y, int _p1z, int _p2x, int _p2y, int _p2z)
     {
@@ -80,7 +82,6 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
 
         return Vector3.Lerp(new Vector3(_p1x,_p1y,_p1z), new Vector3(_p2x, _p2y, _p2z), lerpVal);
     }
-
 
     private int GetCubeIndex(in TerrainChunk _chunk, int x, int y, int z)
     {

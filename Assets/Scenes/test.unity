@@ -401,11 +401,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6becbf15d91b5ad4e986bdbf108b7561, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  autoUpdate: 1
-  renderType: 1
-  chunkWidth: 16
-  chunkHeight: 16
-  chunkDepth: 16
+  autoUpdate: 0
+  renderType: 2
+  shader: {fileID: 7200000, guid: 0d9a9760f92783640bb1daaaee812bcb, type: 3}
   viewer: {fileID: 1796052648}
   chunkPrefab: {fileID: 4622274691877607373, guid: 2826151d2840a25428bb8b20c42ce3d9,
     type: 3}
@@ -413,7 +411,7 @@ MonoBehaviour:
   seed: 0
   frequency: 0.025
   offset: {x: -73.6, y: 0, z: 0}
-  renderDistance: 3
+  renderDistance: 5
 --- !u!4 &1973795516
 Transform:
   m_ObjectHideFlags: 0

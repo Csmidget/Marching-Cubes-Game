@@ -1,0 +1,113 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+#include "UnityCG.cginc"
+
+#include "MarchingCubesData.cginc"
+
+struct Triangle
+{
+    float3 vertex1;
+    float3 vertex2;
+    float3 vertex3;
+};
+
+//CONSTANTS
+static const uint3 offset = uint3(8, 8, 8);
+// VARIABLES
+AppendStructuredBuffer<Triangle> _resultTriangles;
+
+
+CBUFFER_START(Params)
+float _clipValue;
+uint dimLen;
+StructuredBuffer<float> _terrainValues;
+CBUFFER_END
+
+// FUNCTIONS
+float GetTerrainValue(uint3 _xyz)
+{
+    uint rawDimLen = dimLen + 1;
+    return _terrainValues[_xyz.x + rawDimLen * _xyz.y + rawDimLen * rawDimLen * _xyz.z];
+}
+
+void GenerateTerrainVals(uint3 xyz, out float vals[8])
+{    
+    vals[0] = GetTerrainValue(xyz + pointToVertex[0]);
+    vals[1] = GetTerrainValue(xyz + pointToVertex[1]);
+    vals[2] = GetTerrainValue(xyz + pointToVertex[2]);
+    vals[3] = GetTerrainValue(xyz + pointToVertex[3]);
+    vals[4] = GetTerrainValue(xyz + pointToVertex[4]);
+    vals[5] = GetTerrainValue(xyz + pointToVertex[5]);
+    vals[6] = GetTerrainValue(xyz + pointToVertex[6]);
+    vals[7] = GetTerrainValue(xyz + pointToVertex[7]);
+}
+
+uint GetCubeIndex(in float _vals[8])
+{
+    uint cubeIndex = 0;
+
+    if (_vals[0] > _clipValue)
+        cubeIndex += 1;
+    if (_vals[1] > _clipValue)
+        cubeIndex += 2;
+    if (_vals[2]> _clipValue)
+        cubeIndex += 4;
+    if (_vals[3] > _clipValue)
+        cubeIndex += 8;
+    if (_vals[4] > _clipValue)
+        cubeIndex += 16;
+    if (_vals[5] > _clipValue)
+        cubeIndex += 32;
+    if (_vals[6] > _clipValue)
+        cubeIndex += 64;
+    if (_vals[7] > _clipValue)
+        cubeIndex += 128;
+
+    return cubeIndex;
+}
+
+float3 InterpBetweenTerrainPoints(in float3 _p1,in float3 _p2, float _p1Val, float _p2Val)
+{
+    float lerpVal = (_clipValue - _p1Val) / (_p2Val - _p1Val);
+    
+    return lerp(_p1, _p2, lerpVal);
+}
+
+Triangle CreateTriangle(float3 _vert1, float3 _vert2, float3 _vert3)
+{
+    Triangle tri;
+    tri.vertex1 = _vert1;
+    tri.vertex2 = _vert2;
+    tri.vertex3 = _vert3;
+    return tri;
+}
+
+// MAIN
+[numthreads(8, 8, 8)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float terrVals[8];
+    GenerateTerrainVals(id.xyz,terrVals);
+    
+    uint cubeIndex = GetCubeIndex(terrVals);
+        
+    for (int i = 0; triTable[cubeIndex][i] != -1; i+=3)
+    {
+        uint vertex1A = edgeToPointA[triTable[cubeIndex][i]];
+        uint vertex1B = edgeToPointB[triTable[cubeIndex][i]];
+                                
+        uint vertex2A = edgeToPointA[triTable[cubeIndex][i+1]];
+        uint vertex2B = edgeToPointB[triTable[cubeIndex][i+1]];
+                       
+        uint vertex3A = edgeToPointA[triTable[cubeIndex][i+2]];
+        uint vertex3B = edgeToPointB[triTable[cubeIndex][i+2]];
+        
+        _resultTriangles.Append(CreateTriangle(
+            InterpBetweenTerrainPoints(pointToVertex[vertex1A], pointToVertex[vertex1B], terrVals[edgeToPointA[triTable[cubeIndex][i]]], terrVals[edgeToPointB[triTable[cubeIndex][i]]]) + id.xyz - offset,
+            InterpBetweenTerrainPoints(pointToVertex[vertex2A], pointToVertex[vertex2B], terrVals[edgeToPointA[triTable[cubeIndex][i + 1]]], terrVals[edgeToPointB[triTable[cubeIndex][i + 1]]]) + id.xyz - offset,
+            InterpBetweenTerrainPoints(pointToVertex[vertex3A], pointToVertex[vertex3B], terrVals[edgeToPointA[triTable[cubeIndex][i + 2]]], terrVals[edgeToPointB[triTable[cubeIndex][i + 2]]]) + id.xyz - offset
+            )
+        );
+    }
+}

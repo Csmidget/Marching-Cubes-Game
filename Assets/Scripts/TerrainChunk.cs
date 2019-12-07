@@ -13,12 +13,8 @@ public class TerrainChunk
     public float[] terrainMap;
     public Vector3 chunkPosition;
     public Vector3 rawPosition;
-    public int width;
-    public int height;
-    public int depth;
-    private int rawWidth;
-    private int rawHeight;
-    private int rawDepth;
+    public int dims;
+    private int rawDims;
     public float clipValue;
 
     IMeshData meshData;
@@ -26,20 +22,16 @@ public class TerrainChunk
     MeshCollider meshCollider;
 
 
-    public TerrainChunk(Vector3 _position, int _width, int _height, int _depth,float _clipValue, Transform _parent, GameObject _chunkPrefab)
+    public TerrainChunk(Vector3 _position, int _dims, float _clipValue, Transform _parent, GameObject _chunkPrefab)
     {
         chunkPosition = _position;
-        width = _width;
-        height = _height;
-        depth = _depth;
-        rawWidth = _width + 1;
-        rawHeight = _height + 1;
-        rawDepth = _depth + 1;
+        dims = _dims;
+        rawDims = dims + 1;
         
-        terrainMap = new float[rawWidth * rawHeight * rawDepth];
+        terrainMap = new float[rawDims * rawDims * rawDims];
 
         clipValue = _clipValue;
-        rawPosition = new Vector3(chunkPosition.x * width, chunkPosition.y * height, chunkPosition.z * depth);
+        rawPosition = new Vector3(chunkPosition.x * dims, chunkPosition.y * dims, chunkPosition.z * dims);
 
         chunkObject = GameObject.Instantiate(_chunkPrefab, _parent);
         chunkObject.name = "Chunk " + chunkPosition;
@@ -53,8 +45,8 @@ public class TerrainChunk
     /// </summary>
     public float this[int _x, int _y, int _z]
     {
-        get { return terrainMap[_x + rawWidth * _y + rawHeight * rawWidth * _z]; }
-        set { terrainMap[_x + rawWidth * _y + rawHeight * rawWidth * _z] = value; }
+        get { return terrainMap[_x + rawDims * _y + rawDims * rawDims * _z]; }
+        set { terrainMap[_x + rawDims * _y + rawDims * rawDims * _z] = value; }
     }
 
     public void SetMesh(IMeshData _meshData)
@@ -85,13 +77,23 @@ public class TerrainChunk
     /// </summary>
     public float Get(int _x, int _y, int _z)
     {
-        if (_x < width)
+        if (_x < dims)
             throw new ArgumentOutOfRangeException("_x", "_x: " + _x + ". value entered greater than width");
-        if (_y < height)
+        if (_y < dims)
             throw new ArgumentOutOfRangeException("_y", "_y: " + _y + ". value entered greater than height");
-        if (_z < depth)
+        if (_z < dims)
             throw new ArgumentOutOfRangeException("_z", "_z: " + _z + ". value entered greater than depth");
 
         return this[_x, _y, _z];           
+    }
+
+    public int Size()
+    {
+        return dims * dims * dims;
+    }
+
+    public int RawSize()
+    {
+        return rawDims * rawDims * rawDims;
     }
 }
