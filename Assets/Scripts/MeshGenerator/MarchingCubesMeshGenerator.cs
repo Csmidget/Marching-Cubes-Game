@@ -4,6 +4,8 @@ using UnityEngine;
 
 //Edge list, Triangle list and pseudo code from: http://paulbourke.net/geometry/polygonise/
 
+//THIS MARCHING CUBES IMPLEMENTATION IS DEPRECATED AND INEFFICIENT. See ComputeShaderMeshGenerator for updated marching cubes implementation.
+
 public class MarchingCubesMeshGenerator : IMeshGenerator
 {
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
@@ -70,15 +72,13 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
 
         _chunk.SetMesh(meshData);
     }
-
-    public override void Init(ComputeShader _shader, float clipValue, int dims) {; }
-
+    
     private Vector3 InterpolateBetweenMCubePoints(in TerrainChunk _chunk, int _p1x, int _p1y, int _p1z, int _p2x, int _p2y, int _p2z)
     {
         float p1Val = _chunk[_p1x,_p1y,_p1z];
         float p2Val = _chunk[_p2x, _p2y, _p2z];
 
-        float lerpVal = (_chunk.clipValue - p1Val) / (p2Val - p1Val);
+        float lerpVal = (clipValue - p1Val) / (p2Val - p1Val);
 
         return Vector3.Lerp(new Vector3(_p1x,_p1y,_p1z), new Vector3(_p2x, _p2y, _p2z), lerpVal);
     }
@@ -87,14 +87,14 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
     {
         int cubeIndex = 0;
 
-        if (_chunk[x  , y  , z  ] > _chunk.clipValue) cubeIndex += 1;
-        if (_chunk[x+1, y  , z  ] > _chunk.clipValue) cubeIndex += 2;
-        if (_chunk[x+1, y  , z+1] > _chunk.clipValue) cubeIndex += 4;
-        if (_chunk[x  , y  , z+1] > _chunk.clipValue) cubeIndex += 8;
-        if (_chunk[x  , y+1, z  ] > _chunk.clipValue) cubeIndex += 16;
-        if (_chunk[x+1, y+1, z  ] > _chunk.clipValue) cubeIndex += 32;
-        if (_chunk[x+1, y+1, z+1] > _chunk.clipValue) cubeIndex += 64;
-        if (_chunk[x  , y+1, z+1] > _chunk.clipValue) cubeIndex += 128;
+        if (_chunk[x  , y  , z  ] > clipValue) cubeIndex += 1;
+        if (_chunk[x+1, y  , z  ] > clipValue) cubeIndex += 2;
+        if (_chunk[x+1, y  , z+1] > clipValue) cubeIndex += 4;
+        if (_chunk[x  , y  , z+1] > clipValue) cubeIndex += 8;
+        if (_chunk[x  , y+1, z  ] > clipValue) cubeIndex += 16;
+        if (_chunk[x+1, y+1, z  ] > clipValue) cubeIndex += 32;
+        if (_chunk[x+1, y+1, z+1] > clipValue) cubeIndex += 64;
+        if (_chunk[x  , y+1, z+1] > clipValue) cubeIndex += 128;
 
         return cubeIndex;
     }

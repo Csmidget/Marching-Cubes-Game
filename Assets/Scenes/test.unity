@@ -181,7 +181,7 @@ Light:
   m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
-  m_Range: 20
+  m_Range: 52.56
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -401,17 +401,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6becbf15d91b5ad4e986bdbf108b7561, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  autoUpdate: 0
-  renderType: 2
-  shader: {fileID: 7200000, guid: 0d9a9760f92783640bb1daaaee812bcb, type: 3}
+  autoUpdate: 1
   viewer: {fileID: 1796052648}
   chunkPrefab: {fileID: 4622274691877607373, guid: 2826151d2840a25428bb8b20c42ce3d9,
     type: 3}
-  clipPercent: 0.483
-  seed: 0
-  frequency: 0.025
-  offset: {x: -73.6, y: 0, z: 0}
-  renderDistance: 5
+  terrainSettings:
+    renderType: 2
+    voxelTerrainSettings:
+      seed: 0
+      frequency: 0.197
+      clipPercent: 0.471
+      offset: {x: 0, y: 0, z: 0}
+      renderDistance: 1
+    marchingCubesTerrainSettings:
+      seed: 0
+      frequency: 0.035
+      clipPercent: 0.459
+      offset: {x: 0, y: 0, z: 0}
+      renderDistance: 3
+    computeShaderTerrainSettings:
+      seed: 0
+      frequency: 0.035
+      clipPercent: 0.459
+      offset: {x: 0, y: 0, z: 0}
+      renderDistance: 4
+      shader: {fileID: 7200000, guid: 0d9a9760f92783640bb1daaaee812bcb, type: 3}
 --- !u!4 &1973795516
 Transform:
   m_ObjectHideFlags: 0

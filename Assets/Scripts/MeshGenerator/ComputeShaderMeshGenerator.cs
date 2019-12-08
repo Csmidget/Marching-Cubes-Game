@@ -20,13 +20,19 @@ class ComputeShaderMeshGenerator : IMeshGenerator
     ComputeBuffer terrainValues;
     ComputeBuffer resultTriangles;
     ComputeBuffer triCountBuffer;
+    TerrainSettingsManager.ComputeShaderTerrainSettings settings;
 
-    public override void Init(ComputeShader _shader, float clipValue,int dims)
+    public override void Init(TerrainSettingsManager.TerrainSettings _settings)
     {
-        shader = _shader;
+        base.Init(_settings);
+
+        settings = (TerrainSettingsManager.ComputeShaderTerrainSettings)_settings;
+
+        shader = settings.shader;
         shader.SetFloat("_clipValue", clipValue);
         kernel = shader.FindKernel("CSMain");
 
+        int dims = settings.chunkDims;
         int rawDims = dims + 1;
 
         terrainValues = new ComputeBuffer(rawDims*rawDims*rawDims, sizeof(float));
@@ -35,7 +41,7 @@ class ComputeShaderMeshGenerator : IMeshGenerator
 
         shader.SetBuffer(kernel, "_terrainValues", terrainValues);
         shader.SetBuffer(kernel, "_resultTriangles", resultTriangles);
-        shader.SetInt("dimLen", dims); 
+        shader.SetInt("dimLen", dims);    
     }
 
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
@@ -65,11 +71,16 @@ class ComputeShaderMeshGenerator : IMeshGenerator
         _chunk.SetMesh(meshData);
     }
 
-    ~ComputeShaderMeshGenerator()
+    public override void Dispose()
     {
         terrainValues.Dispose();
         triCountBuffer.Dispose();
         resultTriangles.Dispose();
+    }
+
+    ~ComputeShaderMeshGenerator()
+    {
+        Dispose();
     }
 }
 

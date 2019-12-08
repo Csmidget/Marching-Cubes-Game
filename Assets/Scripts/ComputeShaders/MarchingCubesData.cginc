@@ -290,9 +290,9 @@ static const int triTable [256][16] = {
     {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
     {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
 
-static const int edgeToPointA[12] = { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3};
+static const uint edgeToPointA[12] = { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3};
 
-static const int edgeToPointB[12] = { 1, 2, 3, 0, 5, 6, 7, 4, 4, 5, 6, 7 };
+static const uint edgeToPointB[12] = { 1, 2, 3, 0, 5, 6, 7, 4, 4, 5, 6, 7 };
 
 static const uint3 pointToVertex[8] = {
     uint3( 0, 0, 0 ),

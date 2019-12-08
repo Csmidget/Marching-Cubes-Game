@@ -15,14 +15,13 @@ public class TerrainChunk
     public Vector3 rawPosition;
     public int dims;
     private int rawDims;
-    public float clipValue;
 
     IMeshData meshData;
     MeshFilter meshFilter;
     MeshCollider meshCollider;
 
 
-    public TerrainChunk(Vector3 _position, int _dims, float _clipValue, Transform _parent, GameObject _chunkPrefab)
+    public TerrainChunk(Vector3 _position, int _dims, Transform _parent, GameObject _chunkPrefab)
     {
         chunkPosition = _position;
         dims = _dims;
@@ -30,7 +29,6 @@ public class TerrainChunk
         
         terrainMap = new float[rawDims * rawDims * rawDims];
 
-        clipValue = _clipValue;
         rawPosition = new Vector3(chunkPosition.x * dims, chunkPosition.y * dims, chunkPosition.z * dims);
 
         chunkObject = GameObject.Instantiate(_chunkPrefab, _parent);
@@ -62,7 +60,7 @@ public class TerrainChunk
             GameObject.DestroyImmediate(chunkObject);
     }
 
-    public void SetVisible(bool visible)
+    public void SetActive(bool visible)
     {
         chunkObject.SetActive(visible);
     }

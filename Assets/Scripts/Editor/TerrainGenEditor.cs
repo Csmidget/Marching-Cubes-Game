@@ -14,14 +14,18 @@ public class TerrainGenEditor : Editor
         if (DrawDefaultInspector())
         {
             if (terrainGen.autoUpdate)
+            {
+                terrainGen.Reset();
                 terrainGen.GenerateMap();
+            }
         }
 
         if (GUILayout.Button("Generate"))
         {
+            terrainGen.Reset();
             terrainGen.GenerateMap();
         }
-        if (GUILayout.Button("Reset"))
+        if (GUILayout.Button("Clear"))
         {
             terrainGen.Reset();
         }

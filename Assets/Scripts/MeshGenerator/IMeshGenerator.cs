@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum RenderType { Voxel, MarchingCubes, ComputeShader }
 
 public abstract class IMeshGenerator
 {
-    public abstract void GenerateChunkMesh(in TerrainChunk _chunkData);
+    protected float clipValue;
 
-    public abstract void Init(ComputeShader _shader, float clipValue, int dims);
+    public abstract void GenerateChunkMesh(in TerrainChunk _chunkData);
+    public virtual void Init(TerrainSettingsManager.TerrainSettings _settings) { clipValue = _settings.clipPercent; }
+
+    public virtual void Dispose() {; }
 }
 
 public static class MeshGeneratorFactory

@@ -12,11 +12,8 @@ struct Triangle
     float3 vertex3;
 };
 
-//CONSTANTS
-static const uint3 offset = uint3(8, 8, 8);
 // VARIABLES
 AppendStructuredBuffer<Triangle> _resultTriangles;
-
 
 CBUFFER_START(Params)
 float _clipValue;
@@ -89,6 +86,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float terrVals[8];
     GenerateTerrainVals(id.xyz,terrVals);
+    
+    uint3 offset = uint3(dimLen / 2, dimLen / 2, dimLen / 2);
     
     uint cubeIndex = GetCubeIndex(terrVals);
         
