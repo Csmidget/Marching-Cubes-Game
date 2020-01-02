@@ -37,6 +37,8 @@ public class TerrainSettingsManager
     [System.Serializable]
     public class TerrainSettings
     {
+        public bool multiThreaded = true;
+
         //In settings so it can be passed to mesh generators.
         public readonly int chunkDims = 16;
 
@@ -54,7 +56,10 @@ public class TerrainSettingsManager
         public Vector3 offset;
 
         [Range(0, 6)]
-        public int renderDistance = 1; //How many chunks around the players current chunk will be rendered.
+        public int minRenderDistance = 1; //How many chunks away from the players current chunk will be forced to render.
+        [Range(6, 10)]
+        public int maxRenderDistance = 6; //
+
     }
 
     [System.Serializable]

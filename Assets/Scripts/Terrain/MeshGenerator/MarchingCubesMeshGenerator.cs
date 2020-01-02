@@ -4,16 +4,15 @@ using UnityEngine;
 
 //Edge list, Triangle list and pseudo code from: http://paulbourke.net/geometry/polygonise/
 
-//THIS MARCHING CUBES IMPLEMENTATION IS DEPRECATED AND INEFFICIENT. See ComputeShaderMeshGenerator for updated marching cubes implementation.
-
 public class MarchingCubesMeshGenerator : IMeshGenerator
 {
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
     {
-        MarchingCubesMeshData meshData = new MarchingCubesMeshData();
+        MeshData meshData = new MeshData();
 
         float halfDims = _chunk.dims / 2.0f;
         Vector3 centerOffset = new Vector3(halfDims, halfDims, halfDims);
+        int verticesIndex = 0;
 
         for (int x = 0; x < _chunk.dims; x++)
         {
@@ -22,65 +21,59 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
                 for (int z = 0; z < _chunk.dims; z++)
                 {
                     int cubeIndex = GetCubeIndex(_chunk, x, y, z);
-                    
-                    int edgeTableVal = edgeTable[cubeIndex];
 
-                    if (edgeTableVal == 0)
+                    if (edgeTable[cubeIndex] == 0)
                         continue;
-                    
-                    Vector3[] vertList = new Vector3[12];
 
-                    /* Find the vertices where the surface intersects the cube */
-                    if ((edgeTableVal & 1) > 0)
-                        vertList[0] = InterpolateBetweenMCubePoints(_chunk, x, y, z, x+1, y, z);// grid.p[0], grid.p[1]);
-                    if ((edgeTableVal & 2) > 0)
-                        vertList[1] = InterpolateBetweenMCubePoints(_chunk, x+1, y, z, x+1, y, z+1);//grid.p[1], grid.p[2]);
-                    if ((edgeTableVal & 4) > 0)                      
-                        vertList[2] = InterpolateBetweenMCubePoints(_chunk, x+1, y, z+1, x, y, z+1);//grid.p[2], grid.p[3]);
-                    if ((edgeTableVal & 8) > 0)                   
-                        vertList[3] = InterpolateBetweenMCubePoints(_chunk, x, y, z+1, x, y, z);//grid.p[3], grid.p[0]);
-                    if ((edgeTableVal & 16) > 0)                            
-                        vertList[4] = InterpolateBetweenMCubePoints(_chunk, x, y+1, z, x+1, y+1, z);//grid.p[4], grid.p[5]);
-                    if ((edgeTableVal & 32) > 0)                            
-                        vertList[5] = InterpolateBetweenMCubePoints(_chunk, x+1, y+1, z, x+1, y+1, z+1);//grid.p[5], grid.p[6]);
-                    if ((edgeTableVal & 64) > 0)                            
-                        vertList[6] = InterpolateBetweenMCubePoints(_chunk, x+1, y+1, z+1, x, y+1, z+1);//grid.p[6], grid.p[7]);
-                    if ((edgeTableVal & 128) > 0)                           
-                        vertList[7] = InterpolateBetweenMCubePoints(_chunk, x, y+1, z+1, x, y+1, z);//grid.p[7], grid.p[4]);
-                    if ((edgeTableVal & 256) > 0)                           
-                        vertList[8] = InterpolateBetweenMCubePoints(_chunk, x, y, z, x, y+1, z);//grid.p[0], grid.p[4]);
-                    if ((edgeTableVal & 512) > 0)                           
-                        vertList[9] = InterpolateBetweenMCubePoints(_chunk, x+1, y, z, x+1, y+1, z);//grid.p[1], grid.p[5]);
-                    if ((edgeTableVal & 1024) > 0)                                      
-                        vertList[10] = InterpolateBetweenMCubePoints(_chunk, x+1, y, z+1, x+1, y+1, z+1);//grid.p[2], grid.p[6]);
-                    if ((edgeTableVal & 2048) > 0)                                      
-                        vertList[11] = InterpolateBetweenMCubePoints(_chunk, x, y, z+1, x, y+1, z+1);//grid.p[3], grid.p[7]);
-
+                    Vector3 xyz = new Vector3(x, y, z); ;
+                                     
                     List<Vector3> vertices = new List<Vector3>();
-                    List<int> triangles = new List<int>();
-                   
-                    for (int i = 0; triTable[cubeIndex, i] != -1; i++)
+          
+                    for (int i = 0; triTable[cubeIndex, i] != -1; i+=3)
                     {
-                        vertices.Add(vertList[triTable[cubeIndex, i]] - centerOffset);
-                        triangles.Add(i);
+                        Vector3 vertex1A = pointToVertex[edgeToPointA[triTable[cubeIndex,i]]] + xyz;
+                        Vector3 vertex1B = pointToVertex[edgeToPointB[triTable[cubeIndex,i]]] + xyz;
+                        
+                        Vector3 vertex2A = pointToVertex[edgeToPointA[triTable[cubeIndex,i + 1]]] + xyz;
+                        Vector3 vertex2B = pointToVertex[edgeToPointB[triTable[cubeIndex,i + 1]]] + xyz;
+                        
+                        Vector3 vertex3A = pointToVertex[edgeToPointA[triTable[cubeIndex,i + 2]]] + xyz;
+                        Vector3 vertex3B = pointToVertex[edgeToPointB[triTable[cubeIndex,i + 2]]] + xyz;
+
+
+                        vertices.Add( InterpBetweenTerrainPoints(_chunk,vertex1A, vertex1B) - centerOffset);
+                        vertices.Add( InterpBetweenTerrainPoints(_chunk,vertex2A, vertex2B) - centerOffset);
+                        vertices.Add( InterpBetweenTerrainPoints(_chunk,vertex3A, vertex3B) - centerOffset);
                     }
 
-                    meshData.AddMarchingCube(vertices, triangles);
+                    AddMarchingCube(meshData, vertices, ref verticesIndex);
                 }
             }                
         }
 
-        _chunk.SetMesh(meshData);
+        _chunk.SetMeshData(meshData);
     }
-    
-    private Vector3 InterpolateBetweenMCubePoints(in TerrainChunk _chunk, int _p1x, int _p1y, int _p1z, int _p2x, int _p2y, int _p2z)
+
+    public void AddMarchingCube(MeshData _meshData, List<Vector3> _vertices, ref int _verticesIndex)
     {
-        float p1Val = _chunk[_p1x,_p1y,_p1z];
-        float p2Val = _chunk[_p2x, _p2y, _p2z];
+        _meshData.vertices.AddRange(_vertices);
+
+        for (int i = 0; i < _vertices.Count; i++)
+        {
+            _meshData.triangles.Add(i + _verticesIndex);
+        }
+
+        _verticesIndex += _vertices.Count;
+    }
+
+    private Vector3 InterpBetweenTerrainPoints(in TerrainChunk _chunk, Vector3 _p1, Vector3 _p2)
+    {
+        float p1Val = _chunk[(int)_p1.x, (int)_p1.y, (int)_p1.z];
+        float p2Val = _chunk[(int)_p2.x, (int)_p2.y, (int)_p2.z];
 
         float lerpVal = (clipValue - p1Val) / (p2Val - p1Val);
 
-        return Vector3.Lerp(new Vector3(_p1x,_p1y,_p1z), new Vector3(_p2x, _p2y, _p2z), lerpVal);
+        return Vector3.Lerp(_p1, _p2, lerpVal);
     }
 
     private int GetCubeIndex(in TerrainChunk _chunk, int x, int y, int z)
@@ -390,5 +383,20 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
         {0, 9, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
         {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
         {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
+
+    int[] edgeToPointA = { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3 };
+
+    int[] edgeToPointB = { 1, 2, 3, 0, 5, 6, 7, 4, 4, 5, 6, 7 };
+
+    Vector3[] pointToVertex = {
+    new Vector3( 0, 0, 0 ),
+    new Vector3( 1, 0, 0 ),
+    new Vector3( 1, 0, 1 ),
+    new Vector3( 0, 0, 1 ),
+    new Vector3( 0, 1, 0 ),
+    new Vector3( 1, 1, 0 ),
+    new Vector3( 1, 1, 1 ),
+    new Vector3( 0, 1, 1 )
+};
 
 }

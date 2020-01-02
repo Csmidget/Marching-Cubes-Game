@@ -26,6 +26,9 @@ class ComputeShaderMeshGenerator : IMeshGenerator
     {
         base.Init(_settings);
 
+        //Cannot multithread compute shader calls.
+        supportsMultiThreading = false;
+
         settings = (TerrainSettingsManager.ComputeShaderTerrainSettings)_settings;
 
         shader = settings.shader;
@@ -46,7 +49,7 @@ class ComputeShaderMeshGenerator : IMeshGenerator
 
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
     {
-        ComputeShaderMeshData meshData = new ComputeShaderMeshData();
+        MeshData meshData = new MeshData();
 
         terrainValues.SetData(_chunk.terrainMap);
 
@@ -64,11 +67,26 @@ class ComputeShaderMeshGenerator : IMeshGenerator
 
         resultTriangles.GetData(triangles);
 
-        meshData.ProcessTriangles(triangles,triCount);
+        ProcessTriangles(meshData, triangles, triCount);
 
-        meshData.CreateMesh();    
+        meshData.CreateMesh();
 
-        _chunk.SetMesh(meshData);
+        _chunk.SetMeshData(meshData);
+    }
+
+    public void ProcessTriangles(MeshData _meshData, Triangle[] _triangles, int _triCount)
+    {
+
+        for (int i = 0; i < _triCount; i++)
+        {
+            _meshData.vertices.Add(_triangles[i].a);
+            _meshData.vertices.Add(_triangles[i].b);
+            _meshData.vertices.Add(_triangles[i].c);
+
+            _meshData.triangles.Add(i * 3);
+            _meshData.triangles.Add(i * 3 + 1);
+            _meshData.triangles.Add(i * 3 + 2);
+        }
     }
 
     public override void Dispose()

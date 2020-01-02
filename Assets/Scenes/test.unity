@@ -181,7 +181,7 @@ Light:
   m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
-  m_Range: 52.56
+  m_Range: 73.55
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -398,34 +398,40 @@ MonoBehaviour:
   m_GameObject: {fileID: 1973795514}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6becbf15d91b5ad4e986bdbf108b7561, type: 3}
+  m_Script: {fileID: 11500000, guid: 6160ff97e9f090e488dca5a70008c172, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  autoUpdate: 1
+  autoUpdate: 0
   viewer: {fileID: 1796052648}
   chunkPrefab: {fileID: 4622274691877607373, guid: 2826151d2840a25428bb8b20c42ce3d9,
     type: 3}
-  terrainSettings:
-    renderType: 2
+  settingsManager:
+    renderType: 1
     voxelTerrainSettings:
+      multiThreaded: 1
       seed: 0
-      frequency: 0.197
-      clipPercent: 0.471
+      frequency: 0
+      clipPercent: 0
       offset: {x: 0, y: 0, z: 0}
-      renderDistance: 1
+      minRenderDistance: 1
+      maxRenderDistance: 6
     marchingCubesTerrainSettings:
+      multiThreaded: 1
       seed: 0
-      frequency: 0.035
-      clipPercent: 0.459
+      frequency: 0.023
+      clipPercent: 0.478
       offset: {x: 0, y: 0, z: 0}
-      renderDistance: 3
+      minRenderDistance: 5
+      maxRenderDistance: 10
     computeShaderTerrainSettings:
+      multiThreaded: 1
       seed: 0
-      frequency: 0.035
-      clipPercent: 0.459
+      frequency: 0
+      clipPercent: 0
       offset: {x: 0, y: 0, z: 0}
-      renderDistance: 4
-      shader: {fileID: 7200000, guid: 0d9a9760f92783640bb1daaaee812bcb, type: 3}
+      minRenderDistance: 1
+      maxRenderDistance: 6
+      shader: {fileID: 0}
 --- !u!4 &1973795516
 Transform:
   m_ObjectHideFlags: 0

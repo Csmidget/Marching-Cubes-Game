@@ -2,9 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
 /// <summary>
 /// Stores data for a chunk, also provides helper functions for easier data access.
-/// Everything is public for efficiency purposes. Only trusted methods should be handed this.
+/// Most variables are public for efficiency purposes. Only trusted classes should be able to access this.
 /// </summary>
 public class TerrainChunk
 {
@@ -16,7 +17,7 @@ public class TerrainChunk
     public int dims;
     private int rawDims;
 
-    IMeshData meshData;
+    MeshData meshData;
     MeshFilter meshFilter;
     MeshCollider meshCollider;
 
@@ -26,6 +27,7 @@ public class TerrainChunk
         chunkPosition = _position;
         dims = _dims;
         rawDims = dims + 1;
+        meshData = null;
         
         terrainMap = new float[rawDims * rawDims * rawDims];
 
@@ -47,9 +49,18 @@ public class TerrainChunk
         set { terrainMap[_x + rawDims * _y + rawDims * rawDims * _z] = value; }
     }
 
-    public void SetMesh(IMeshData _meshData)
+    public void SetMeshData(MeshData _meshData)
     {
         meshData = _meshData;
+    }
+
+    public bool HasMesh()
+    {
+        return meshData != null;
+    }
+
+    public void ApplyMesh()
+    {
         meshFilter.sharedMesh = meshData.CreateMesh();
         meshCollider.sharedMesh = meshData.CreateMesh();
     }

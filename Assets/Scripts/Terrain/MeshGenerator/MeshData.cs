@@ -2,17 +2,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class IMeshData
+public class MeshData
 {
     public List<Vector3> vertices;
     public List<int> triangles;
     public List<Vector2> uvs;
+    public List<Vector3> normals;
+    bool calculateNormals = true;
 
-    public IMeshData()
+    public MeshData()
     {
         vertices = new List<Vector3>();
         uvs = new List<Vector2>();
         triangles = new List<int>();
+        normals = new List<Vector3>();
+    }
+
+    public MeshData(bool _calculateNormals) : this()
+    {
+        calculateNormals = _calculateNormals;
     }
 
     public virtual Mesh CreateMesh()
@@ -21,7 +29,10 @@ public class IMeshData
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
 
-        mesh.RecalculateNormals();
+        if (calculateNormals)
+            mesh.RecalculateNormals();
+        else
+            mesh.normals = normals.ToArray();
 
         return mesh;
     }
