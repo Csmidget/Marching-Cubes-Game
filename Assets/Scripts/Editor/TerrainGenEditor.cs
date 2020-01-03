@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-[CustomEditor(typeof(TerrainGenerator))]
+[CustomEditor(typeof(TerrainManager))]
 public class TerrainGenEditor : Editor
 {
 
     public override void OnInspectorGUI()
     {
-        TerrainGenerator terrainGen = (TerrainGenerator)target;
+        TerrainManager terrainGen = (TerrainManager)target;
 
         if (DrawDefaultInspector())
         {

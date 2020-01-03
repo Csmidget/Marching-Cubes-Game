@@ -17,7 +17,7 @@ public abstract class IMeshGenerator
     }
 
     public abstract void GenerateChunkMesh(in TerrainChunk _chunkData);
-    public virtual void Init(TerrainSettingsManager.TerrainSettings _settings) 
+    public virtual void Init(TerrainSettings.TerrainInnerSettings _settings) 
     { 
         clipValue = _settings.clipPercent;
         supportsMultiThreading = true;

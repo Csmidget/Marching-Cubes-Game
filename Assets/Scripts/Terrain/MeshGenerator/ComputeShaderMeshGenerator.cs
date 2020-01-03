@@ -20,16 +20,16 @@ class ComputeShaderMeshGenerator : IMeshGenerator
     ComputeBuffer terrainValues;
     ComputeBuffer resultTriangles;
     ComputeBuffer triCountBuffer;
-    TerrainSettingsManager.ComputeShaderTerrainSettings settings;
+    TerrainSettings.ComputeShaderTerrainSettings settings;
 
-    public override void Init(TerrainSettingsManager.TerrainSettings _settings)
+    public override void Init(TerrainSettings.TerrainInnerSettings _settings)
     {
         base.Init(_settings);
 
         //Cannot multithread compute shader calls.
         supportsMultiThreading = false;
 
-        settings = (TerrainSettingsManager.ComputeShaderTerrainSettings)_settings;
+        settings = (TerrainSettings.ComputeShaderTerrainSettings)_settings;
 
         shader = settings.shader;
         shader.SetFloat("_clipValue", clipValue);

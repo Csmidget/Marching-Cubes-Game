@@ -5,21 +5,21 @@ using UnityEngine;
 public enum RenderType { Voxel, MarchingCubes, ComputeShader }
 
 [System.Serializable]
-public class TerrainSettingsManager
+public class TerrainSettings 
 {
     public RenderType renderType;
 
     [SerializeField]
     [ConditionalHide("renderType", 0)]
-    private TerrainSettings voxelTerrainSettings;
+    private TerrainInnerSettings voxelTerrainSettings;
     [SerializeField]
     [ConditionalHide("renderType", 1)]
-    private TerrainSettings marchingCubesTerrainSettings;
+    private TerrainInnerSettings marchingCubesTerrainSettings;
     [SerializeField]
     [ConditionalHide("renderType", 2)]
     private ComputeShaderTerrainSettings computeShaderTerrainSettings;
 
-    public TerrainSettings Get()
+    public TerrainInnerSettings Get()
     {
         switch (renderType)
         {
@@ -35,12 +35,13 @@ public class TerrainSettingsManager
     }
 
     [System.Serializable]
-    public class TerrainSettings
+    public class TerrainInnerSettings
     {
         public bool multiThreaded = true;
 
         //In settings so it can be passed to mesh generators.
         public readonly int chunkDims = 16;
+        public readonly int halfDims = 8;
 
         //Seed for the noise generator
         public int seed;
@@ -63,7 +64,7 @@ public class TerrainSettingsManager
     }
 
     [System.Serializable]
-    public class ComputeShaderTerrainSettings : TerrainSettings
+    public class ComputeShaderTerrainSettings : TerrainInnerSettings
     {
         public ComputeShader shader;
     }

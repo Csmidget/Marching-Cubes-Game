@@ -5,7 +5,7 @@ using System.Threading;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-public class TerrainGenerator : MonoBehaviour
+public class TerrainManager : MonoBehaviour
 {
     //######################
     #region Public Variables
@@ -15,7 +15,16 @@ public class TerrainGenerator : MonoBehaviour
     public Transform viewer;
     public GameObject chunkPrefab;
 
-    public TerrainSettingsManager settingsManager;
+    public TerrainSettings settingsManager;
+
+    public static TerrainManager Instance
+    {
+        get
+        {
+            return instance;
+        }
+    }
+
 
     #endregion
     //######################
@@ -29,7 +38,7 @@ public class TerrainGenerator : MonoBehaviour
     private Dictionary<Vector3, TerrainChunk> terrainData;
     private List<TerrainChunk> activeChunks;
     List<Vector3> terrainChunkOffsets;
-    private TerrainSettingsManager.TerrainSettings settings;
+    private TerrainSettings.TerrainInnerSettings settings;
 
     // Multithreading
     Thread generateChunksThread;
@@ -37,20 +46,108 @@ public class TerrainGenerator : MonoBehaviour
     private Queue<TerrainChunk> chunksToGenerate;
     private Queue<TerrainChunk> generatedChunks;
 
+    private static TerrainManager instance = null;
+
     // The chunk the viewer was in last update.
     Vector3 previousViewerChunk;
 
     #endregion
     //######################
+    #region Public Functions
+
+    public void ModifyTerrainAtPoint(Vector3 _point, float _change)
+    {
+        Debug.Log("raw point: " + _point);
+        Vector3 nearestPoint = new Vector3(Mathf.Round(_point.x), Mathf.Round(_point.y), Mathf.Round(_point.z));
+        Vector3 chunk = ChunkAtPoint(nearestPoint);
+
+        
+        Debug.Log("chunk: " + chunk);
+        Debug.Log("point: " + nearestPoint);
+
+        int posInChunkX = Mathf.RoundToInt (((nearestPoint.x - settings.halfDims) % settings.chunkDims + 16) % settings.chunkDims);
+        int posInChunkY = Mathf.RoundToInt (((nearestPoint.y - settings.halfDims) % settings.chunkDims + 16) % settings.chunkDims);
+        int posInChunkZ = Mathf.RoundToInt (((nearestPoint.z - settings.halfDims) % settings.chunkDims + 16) % settings.chunkDims);
+
+        Debug.Log("pointInChunk: " +  posInChunkX + "," + posInChunkY + "," + posInChunkZ);
+
+        terrainData[chunk][posInChunkX, posInChunkY, posInChunkZ] += _change;
+        meshGenerator.GenerateChunkMesh(terrainData[chunk]);
+        terrainData[chunk].ApplyMesh();
+
+        if (posInChunkX == 0)
+        {
+            terrainData[chunk + Vector3.left][settings.chunkDims, posInChunkY, posInChunkZ] += _change;
+            meshGenerator.GenerateChunkMesh(terrainData[chunk + Vector3.left]);
+            terrainData[chunk + Vector3.left].ApplyMesh();
+        }
+        if (posInChunkY == 0)
+        {
+            terrainData[chunk + Vector3.down][posInChunkX, settings.chunkDims, posInChunkZ] += _change;
+            meshGenerator.GenerateChunkMesh(terrainData[chunk + Vector3.down]);
+            terrainData[chunk + Vector3.down].ApplyMesh();
+        }
+        if (posInChunkZ == 0)
+        {
+            terrainData[chunk + Vector3.back][posInChunkX, posInChunkY, settings.chunkDims] += _change;
+            meshGenerator.GenerateChunkMesh(terrainData[chunk + Vector3.back]);
+            terrainData[chunk + Vector3.back].ApplyMesh();
+        }
+        
+        if (posInChunkX == 0 && posInChunkY == 0)
+        {
+            terrainData[chunk + new Vector3(-1, -1, 0)][settings.chunkDims, settings.chunkDims, posInChunkZ] += _change;
+            meshGenerator.GenerateChunkMesh(terrainData[chunk + new Vector3(-1, -1, 0)]);
+            terrainData[chunk + new Vector3(-1, -1, 0)].ApplyMesh();
+        }
+        if (posInChunkX == 0 && posInChunkZ == 0)
+        {
+            terrainData[chunk + new Vector3(-1, 0, -1)][settings.chunkDims, posInChunkY, settings.chunkDims] += _change;
+            meshGenerator.GenerateChunkMesh(terrainData[chunk + new Vector3(-1, 0, -1)]);
+            terrainData[chunk + new Vector3(-1, 0, -1)].ApplyMesh();
+        }
+        if (posInChunkY == 0 && posInChunkZ == 0)
+        {
+            terrainData[chunk + new Vector3(0, -1, -1)][posInChunkX, settings.chunkDims, settings.chunkDims] += _change;
+            meshGenerator.GenerateChunkMesh(terrainData[chunk + new Vector3(0, -1, -1)]);
+            terrainData[chunk + new Vector3(0, -1, -1)].ApplyMesh();
+        }
+        
+        if (posInChunkX == 0 && posInChunkY == 0 && posInChunkZ == 0)
+        {
+            terrainData[chunk + new Vector3(-1, -1, -1)][settings.chunkDims, settings.chunkDims, settings.chunkDims] += _change;
+            meshGenerator.GenerateChunkMesh(terrainData[chunk + new Vector3(-1, -1, -1)]);
+            terrainData[chunk + new Vector3(-1, -1, -1)].ApplyMesh();
+        }
+
+
+    }
+
+    #endregion
+    //######################
     #region Monobehaviour Functions
 
-    public void Start()
+    private void Awake()
+    {
+        if (instance != null)
+        {
+            Debug.LogWarning("Attempted to instantiate multiple TerrainManagers. Duplicate manager destroyed");
+            Destroy(this);
+        }
+        else
+        {
+            instance = this;
+        }
+
+    }
+
+    private void Start()
     {
         Reset();
         GenerateMap();
     }
 
-    public void Update()
+    private void Update()
     {
         UpdateGeneratedChunks();
         UpdateVisibleChunks();
@@ -70,7 +167,7 @@ public class TerrainGenerator : MonoBehaviour
     //######################
     #region Initialization
 
-    public void Init()
+    private void Init()
     {
         settings = settingsManager.Get();
         terrainChunkOffsets = InitializeChunkoffsets(settings.maxRenderDistance);
@@ -79,8 +176,14 @@ public class TerrainGenerator : MonoBehaviour
         chunksToGenerate = new Queue<TerrainChunk>();
         chunksToGeneratePriority = new Queue<TerrainChunk>();
 
-        if (terrainData == null)
-            terrainData = new Dictionary<Vector3, TerrainChunk>();
+        if (terrainData != null)
+        {
+            foreach (var chunk in terrainData)
+            {
+                chunk.Value.Destroy();
+            }
+        }
+        terrainData = new Dictionary<Vector3, TerrainChunk>();
 
         activeChunks = new List<TerrainChunk>();
 
@@ -107,7 +210,7 @@ public class TerrainGenerator : MonoBehaviour
     }
 
     // Generates a list of offsets for all chunks within render distance sorted in order of distance. Runs once and generated list is cached for reuse.
-    public List<Vector3> InitializeChunkoffsets(int _renderDistance)
+    private List<Vector3> InitializeChunkoffsets(int _renderDistance)
     {
         List<Vector3> outList = new List<Vector3>();
 
@@ -131,7 +234,7 @@ public class TerrainGenerator : MonoBehaviour
     //######################
     #region Chunk Rendering
 
-    public void UpdateVisibleChunks()
+    private void UpdateVisibleChunks()
     {
         Vector3 viewerChunk = GetViewerChunk();
 
@@ -149,7 +252,7 @@ public class TerrainGenerator : MonoBehaviour
         previousViewerChunk = viewerChunk;
     }
 
-    public void RenderVisibleChunks(int _renderDistance, Vector3 _viewerChunk, bool _generateImmediately)
+    private void RenderVisibleChunks(int _renderDistance, Vector3 _viewerChunk, bool _generateImmediately)
     {
         for (int i = 0; i < terrainChunkOffsets.Count; i++)
         {
@@ -160,7 +263,7 @@ public class TerrainGenerator : MonoBehaviour
         }
     }
 
-    public void RenderChunk(in Vector3 _viewerChunk, Vector3 _chunkOffset, bool _generateImmediately)
+    private void RenderChunk(in Vector3 _viewerChunk, Vector3 _chunkOffset, bool _generateImmediately)
     {
         Vector3 chunkPos = _viewerChunk + _chunkOffset;
 
@@ -200,7 +303,7 @@ public class TerrainGenerator : MonoBehaviour
     #endregion
     //######################
     #region Chunk Generation
-    public void GenerateQueuedChunks()
+    private void GenerateQueuedChunks()
     {
         // Force all high priority chunks to be generated
         while (chunksToGeneratePriority.Count > 0)
@@ -223,7 +326,7 @@ public class TerrainGenerator : MonoBehaviour
     /// Checks for any newly generated chunk meshes and applies them to their gameobjects. Can only be done on the main thread.
     /// If multithreading isn't enabled, will also generate chunk meshes manually
     /// </summary>
-    public void UpdateGeneratedChunks()
+    private void UpdateGeneratedChunks()
     {
 
         if (!generateChunksThread.IsAlive && settings.multiThreaded && meshGenerator.SupportsMultiThreading)
@@ -236,11 +339,13 @@ public class TerrainGenerator : MonoBehaviour
         while (generatedChunks.Count > 0)
         {
             TerrainChunk chunk = generatedChunks.Dequeue();
-            chunk.ApplyMesh();
+
+            if (chunk != null)
+                chunk.ApplyMesh();
         }
     }
 
-    public TerrainChunk GenerateChunk(TerrainChunk _chunk)
+    private TerrainChunk GenerateChunk(TerrainChunk _chunk)
     {
         if (_chunk.HasMesh())
             return _chunk;
@@ -269,9 +374,18 @@ public class TerrainGenerator : MonoBehaviour
 
     private Vector3 GetViewerChunk()
     {
-        return viewer == null ? Vector3.zero : new Vector3(Mathf.Round(viewer.position.x / settings.chunkDims), Mathf.Round(viewer.position.y / settings.chunkDims), Mathf.Round(viewer.position.z / settings.chunkDims));
+        return ChunkAtPoint(viewer.position);
     }
 
+    private Vector3 ChunkAtPoint(Vector3 _point)
+    {
+        return new Vector3(Mathf.Round(_point.x / settings.chunkDims), Mathf.Round(_point.y / settings.chunkDims), Mathf.Round(_point.z / settings.chunkDims));
+    }
+
+    private Vector3 RoundVec3ToInt(Vector3 _vec)
+    {
+        return new Vector3(Mathf.Round(_vec.x), Mathf.Round(_vec.y), Mathf.Round(_vec.z));
+    }
 
     private TerrainChunk CreateEmptyChunk(Vector3 _chunkPosition)
     {
