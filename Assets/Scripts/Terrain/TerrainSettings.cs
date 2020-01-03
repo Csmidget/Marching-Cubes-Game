@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum RenderType { Voxel, MarchingCubes, ComputeShader }
+public enum RenderType { Voxel_LEGACY, MarchingCubes, ComputeShader }
 
 [System.Serializable]
 public class TerrainSettings 
@@ -23,7 +23,7 @@ public class TerrainSettings
     {
         switch (renderType)
         {
-            case RenderType.Voxel:
+            case RenderType.Voxel_LEGACY:
                 return voxelTerrainSettings;
             case RenderType.MarchingCubes:
                 return marchingCubesTerrainSettings;

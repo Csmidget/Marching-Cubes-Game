@@ -9,8 +9,6 @@ public class VoxelMeshGenerator : IMeshGenerator
     {
        MeshData meshData = new MeshData(false);
         int verticesIndex = 0;
-        
-        Vector3 centerOffset = new Vector3(_chunk.dims / 2.0f, _chunk.dims / 2.0f, _chunk.dims / 2.0f);
 
         for (int x = 0; x < _chunk.dims; x++)
         {
@@ -21,7 +19,7 @@ public class VoxelMeshGenerator : IMeshGenerator
                     if (_chunk[x, y, z] <= clipValue)
                         continue;
 
-                    Vector3 pos = new Vector3(x, y, z) - centerOffset;                  
+                    Vector3 pos = new Vector3(x, y, z);                  
 
                     if (x + 1 >= _chunk.dims || _chunk[x+1,y,z] <= clipValue)
                         AddSquare(meshData, pos, new Vector3(1,0,0), ref verticesIndex);

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TerrainGun : MonoBehaviour
+public class TerrainMorpher : MonoBehaviour
 {
     [Range(0,1)]
     public float power; //Change in terrain per second

@@ -86,9 +86,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float terrVals[8];
     GenerateTerrainVals(id.xyz,terrVals);
-    
-    uint3 offset = uint3(dimLen / 2, dimLen / 2, dimLen / 2);
-    
+       
     uint cubeIndex = GetCubeIndex(terrVals);
         
     for (int i = 0; triTable[cubeIndex][i] != -1; i+=3)
@@ -103,9 +101,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         uint vertex3B = edgeToPointB[triTable[cubeIndex][i+2]];
         
         _resultTriangles.Append(CreateTriangle(
-            InterpBetweenTerrainPoints(pointToVertex[vertex1A], pointToVertex[vertex1B], terrVals[edgeToPointA[triTable[cubeIndex][i]]], terrVals[edgeToPointB[triTable[cubeIndex][i]]]) + id.xyz - offset,
-            InterpBetweenTerrainPoints(pointToVertex[vertex2A], pointToVertex[vertex2B], terrVals[edgeToPointA[triTable[cubeIndex][i + 1]]], terrVals[edgeToPointB[triTable[cubeIndex][i + 1]]]) + id.xyz - offset,
-            InterpBetweenTerrainPoints(pointToVertex[vertex3A], pointToVertex[vertex3B], terrVals[edgeToPointA[triTable[cubeIndex][i + 2]]], terrVals[edgeToPointB[triTable[cubeIndex][i + 2]]]) + id.xyz - offset
+            InterpBetweenTerrainPoints(pointToVertex[vertex1A], pointToVertex[vertex1B], terrVals[edgeToPointA[triTable[cubeIndex][i]]], terrVals[edgeToPointB[triTable[cubeIndex][i]]]) + id.xyz,
+            InterpBetweenTerrainPoints(pointToVertex[vertex2A], pointToVertex[vertex2B], terrVals[edgeToPointA[triTable[cubeIndex][i + 1]]], terrVals[edgeToPointB[triTable[cubeIndex][i + 1]]]) + id.xyz,
+            InterpBetweenTerrainPoints(pointToVertex[vertex3A], pointToVertex[vertex3B], terrVals[edgeToPointA[triTable[cubeIndex][i + 2]]], terrVals[edgeToPointB[triTable[cubeIndex][i + 2]]]) + id.xyz
             )
         );
     }

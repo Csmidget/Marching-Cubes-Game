@@ -31,6 +31,10 @@ public class CameraController : MonoBehaviour
         if (Input.GetKey(KeyCode.D))
             rb.AddRelativeForce(Vector3.right * Time.deltaTime * speed);
 
+        //DEBUG
+        if (Input.GetKey(KeyCode.Escape))
+            Application.Quit();
+
         transform.Rotate(new Vector3(-Input.GetAxis("Mouse Y"), Input.GetAxis("Mouse X"), 0));
     }
 }

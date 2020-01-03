@@ -10,8 +10,8 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
     {
         MeshData meshData = new MeshData();
 
-        float halfDims = _chunk.dims / 2.0f;
-        Vector3 centerOffset = new Vector3(halfDims, halfDims, halfDims);
+        //float halfDims = _chunk.dims / 2.0f;
+        //Vector3 centerOffset = new Vector3(halfDims, halfDims, halfDims);
         int verticesIndex = 0;
 
         for (int x = 0; x < _chunk.dims; x++)
@@ -40,10 +40,9 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
                         Vector3 vertex3A = pointToVertex[edgeToPointA[triTable[cubeIndex,i + 2]]] + xyz;
                         Vector3 vertex3B = pointToVertex[edgeToPointB[triTable[cubeIndex,i + 2]]] + xyz;
 
-
-                        vertices.Add( InterpBetweenTerrainPoints(_chunk,vertex1A, vertex1B) - centerOffset);
-                        vertices.Add( InterpBetweenTerrainPoints(_chunk,vertex2A, vertex2B) - centerOffset);
-                        vertices.Add( InterpBetweenTerrainPoints(_chunk,vertex3A, vertex3B) - centerOffset);
+                        vertices.Add( InterpBetweenTerrainPoints(_chunk,vertex1A, vertex1B));
+                        vertices.Add( InterpBetweenTerrainPoints(_chunk,vertex2A, vertex2B));
+                        vertices.Add( InterpBetweenTerrainPoints(_chunk,vertex3A, vertex3B));
                     }
 
                     AddMarchingCube(meshData, vertices, ref verticesIndex);

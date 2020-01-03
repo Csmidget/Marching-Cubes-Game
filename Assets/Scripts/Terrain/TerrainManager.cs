@@ -57,70 +57,36 @@ public class TerrainManager : MonoBehaviour
 
     public void ModifyTerrainAtPoint(Vector3 _point, float _change)
     {
-        Debug.Log("raw point: " + _point);
         Vector3 nearestPoint = new Vector3(Mathf.Round(_point.x), Mathf.Round(_point.y), Mathf.Round(_point.z));
-        Vector3 chunk = ChunkAtPoint(nearestPoint);
+        Vector3 chunkPos = ChunkAtPoint(nearestPoint);
 
-        
-        Debug.Log("chunk: " + chunk);
-        Debug.Log("point: " + nearestPoint);
+        //Get the real modulo value for each point (plain % operator can return negative numbers. We only want 0 - chunkDims.)
+        int posInChunkX = Mathf.RoundToInt ((nearestPoint.x % settings.chunkDims + settings.chunkDims) % settings.chunkDims);
+        int posInChunkY = Mathf.RoundToInt ((nearestPoint.y % settings.chunkDims + settings.chunkDims) % settings.chunkDims);
+        int posInChunkZ = Mathf.RoundToInt ((nearestPoint.z % settings.chunkDims + settings.chunkDims) % settings.chunkDims);
 
-        int posInChunkX = Mathf.RoundToInt (((nearestPoint.x - settings.halfDims) % settings.chunkDims + 16) % settings.chunkDims);
-        int posInChunkY = Mathf.RoundToInt (((nearestPoint.y - settings.halfDims) % settings.chunkDims + 16) % settings.chunkDims);
-        int posInChunkZ = Mathf.RoundToInt (((nearestPoint.z - settings.halfDims) % settings.chunkDims + 16) % settings.chunkDims);
+        Debug.Log("Pos: " + posInChunkX + "," + posInChunkY + "," + posInChunkZ);
 
-        Debug.Log("pointInChunk: " +  posInChunkX + "," + posInChunkY + "," + posInChunkZ);
+        ModifyPointInChunk(chunkPos, posInChunkX, posInChunkY, posInChunkZ, _change);
 
-        terrainData[chunk][posInChunkX, posInChunkY, posInChunkZ] += _change;
-        meshGenerator.GenerateChunkMesh(terrainData[chunk]);
-        terrainData[chunk].ApplyMesh();
-
+        //All chunks store an extra layer of data so that they can merge seamlessly with neighbours.
+        //We need to ensure that any neighbours storing points on the edge of the chunk are also updated.
         if (posInChunkX == 0)
-        {
-            terrainData[chunk + Vector3.left][settings.chunkDims, posInChunkY, posInChunkZ] += _change;
-            meshGenerator.GenerateChunkMesh(terrainData[chunk + Vector3.left]);
-            terrainData[chunk + Vector3.left].ApplyMesh();
-        }
+            ModifyPointInChunk(chunkPos + Vector3.left, settings.chunkDims, posInChunkY, posInChunkZ, _change);
         if (posInChunkY == 0)
-        {
-            terrainData[chunk + Vector3.down][posInChunkX, settings.chunkDims, posInChunkZ] += _change;
-            meshGenerator.GenerateChunkMesh(terrainData[chunk + Vector3.down]);
-            terrainData[chunk + Vector3.down].ApplyMesh();
-        }
+            ModifyPointInChunk(chunkPos + Vector3.down, posInChunkX, settings.chunkDims, posInChunkZ, _change);
         if (posInChunkZ == 0)
-        {
-            terrainData[chunk + Vector3.back][posInChunkX, posInChunkY, settings.chunkDims] += _change;
-            meshGenerator.GenerateChunkMesh(terrainData[chunk + Vector3.back]);
-            terrainData[chunk + Vector3.back].ApplyMesh();
-        }
-        
+            ModifyPointInChunk(chunkPos + Vector3.back, posInChunkX, posInChunkY, settings.chunkDims, _change);
+
         if (posInChunkX == 0 && posInChunkY == 0)
-        {
-            terrainData[chunk + new Vector3(-1, -1, 0)][settings.chunkDims, settings.chunkDims, posInChunkZ] += _change;
-            meshGenerator.GenerateChunkMesh(terrainData[chunk + new Vector3(-1, -1, 0)]);
-            terrainData[chunk + new Vector3(-1, -1, 0)].ApplyMesh();
-        }
+            ModifyPointInChunk(chunkPos + new Vector3(-1, -1, 0), settings.chunkDims, settings.chunkDims, posInChunkZ, _change);
         if (posInChunkX == 0 && posInChunkZ == 0)
-        {
-            terrainData[chunk + new Vector3(-1, 0, -1)][settings.chunkDims, posInChunkY, settings.chunkDims] += _change;
-            meshGenerator.GenerateChunkMesh(terrainData[chunk + new Vector3(-1, 0, -1)]);
-            terrainData[chunk + new Vector3(-1, 0, -1)].ApplyMesh();
-        }
-        if (posInChunkY == 0 && posInChunkZ == 0)
-        {
-            terrainData[chunk + new Vector3(0, -1, -1)][posInChunkX, settings.chunkDims, settings.chunkDims] += _change;
-            meshGenerator.GenerateChunkMesh(terrainData[chunk + new Vector3(0, -1, -1)]);
-            terrainData[chunk + new Vector3(0, -1, -1)].ApplyMesh();
-        }
-        
+            ModifyPointInChunk(chunkPos + new Vector3(-1, 0, -1), settings.chunkDims, posInChunkY, settings.chunkDims, _change);
+        if (posInChunkY == 0 && posInChunkZ == 0) 
+            ModifyPointInChunk(chunkPos + new Vector3(0, -1, -1), posInChunkX, settings.chunkDims, settings.chunkDims, _change);
+
         if (posInChunkX == 0 && posInChunkY == 0 && posInChunkZ == 0)
-        {
-            terrainData[chunk + new Vector3(-1, -1, -1)][settings.chunkDims, settings.chunkDims, settings.chunkDims] += _change;
-            meshGenerator.GenerateChunkMesh(terrainData[chunk + new Vector3(-1, -1, -1)]);
-            terrainData[chunk + new Vector3(-1, -1, -1)].ApplyMesh();
-        }
-
-
+            ModifyPointInChunk(chunkPos + new Vector3(-1, -1, -1), settings.chunkDims, settings.chunkDims, settings.chunkDims, _change);
     }
 
     #endregion
@@ -379,7 +345,14 @@ public class TerrainManager : MonoBehaviour
 
     private Vector3 ChunkAtPoint(Vector3 _point)
     {
-        return new Vector3(Mathf.Round(_point.x / settings.chunkDims), Mathf.Round(_point.y / settings.chunkDims), Mathf.Round(_point.z / settings.chunkDims));
+        return new Vector3(Mathf.Round((_point.x - settings.halfDims + 0.001f) / settings.chunkDims), Mathf.Round((_point.y - settings.halfDims + 0.001f) / settings.chunkDims), Mathf.Round((_point.z - settings.halfDims + 0.001f) / settings.chunkDims));
+    }
+
+    private void ModifyPointInChunk(Vector3 _chunkPos, int _posInChunkX, int _posInChunkY, int _posInChunkZ, float _changeAmount)
+    {
+        terrainData[_chunkPos][_posInChunkX, _posInChunkY, _posInChunkZ] += _changeAmount;
+        meshGenerator.GenerateChunkMesh(terrainData[_chunkPos]);
+        terrainData[_chunkPos].ApplyMesh();
     }
 
     private Vector3 RoundVec3ToInt(Vector3 _vec)

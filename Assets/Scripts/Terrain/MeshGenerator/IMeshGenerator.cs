@@ -32,7 +32,7 @@ public static class MeshGeneratorFactory
     {
         switch (_renderType)
         {
-            case RenderType.Voxel:
+            case RenderType.Voxel_LEGACY:
                 return new VoxelMeshGenerator();
             case RenderType.MarchingCubes:
                 return new MarchingCubesMeshGenerator();
