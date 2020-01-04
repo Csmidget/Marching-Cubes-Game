@@ -23,7 +23,7 @@ public class MeshData
         calculateNormals = _calculateNormals;
     }
 
-    public virtual Mesh CreateMesh()
+    public Mesh CreateMesh()
     {
         Mesh mesh = new Mesh();
         mesh.vertices = vertices.ToArray();
@@ -36,5 +36,4 @@ public class MeshData
 
         return mesh;
     }
-
 }

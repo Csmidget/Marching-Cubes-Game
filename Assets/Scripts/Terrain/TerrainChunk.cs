@@ -16,6 +16,7 @@ public class TerrainChunk
     public Vector3 rawPosition;
     public int dims;
     private int rawDims;
+    public bool MeshOutdated { get; private set; }
 
     MeshData meshData;
     MeshFilter meshFilter;
@@ -40,13 +41,20 @@ public class TerrainChunk
         meshCollider = chunkObject.GetComponent<MeshCollider>();
     }
 
+
     /// <summary>
     /// NON RANGE CHECKED get from terrainMap. Less efficient than direct access.
     /// </summary>
     public float this[int _x, int _y, int _z]
     {
         get { return terrainMap[_x + rawDims * _y + rawDims * rawDims * _z]; }
-        set { terrainMap[_x + rawDims * _y + rawDims * rawDims * _z] = value; }
+        set { terrainMap[_x + rawDims * _y + rawDims * rawDims * _z] = value; MeshOutdated = true; }
+    }
+
+    public float this[Vector3Int _xyz]
+    {
+        get { return terrainMap[_xyz.x + rawDims * _xyz.y + rawDims * rawDims * _xyz.z]; }
+        set { terrainMap[_xyz.x + rawDims * _xyz.y + rawDims * rawDims * _xyz.z] = value; MeshOutdated = true; }
     }
 
     public void SetMeshData(MeshData _meshData)
@@ -63,6 +71,7 @@ public class TerrainChunk
     {
         meshFilter.sharedMesh = meshData.CreateMesh();
         meshCollider.sharedMesh = meshData.CreateMesh();
+        MeshOutdated = false;
     }
 
     public void Destroy()

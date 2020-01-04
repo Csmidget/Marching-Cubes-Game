@@ -42,6 +42,7 @@ public class TerrainManager : MonoBehaviour
 
     // Multithreading
     Thread generateChunksThread;
+    private Queue<TerrainChunk> chunksToRegenerateMesh;
     private Queue<TerrainChunk> chunksToGeneratePriority;
     private Queue<TerrainChunk> chunksToGenerate;
     private Queue<TerrainChunk> generatedChunks;
@@ -64,9 +65,8 @@ public class TerrainManager : MonoBehaviour
         int posInChunkX = Mathf.RoundToInt ((nearestPoint.x % settings.chunkDims + settings.chunkDims) % settings.chunkDims);
         int posInChunkY = Mathf.RoundToInt ((nearestPoint.y % settings.chunkDims + settings.chunkDims) % settings.chunkDims);
         int posInChunkZ = Mathf.RoundToInt ((nearestPoint.z % settings.chunkDims + settings.chunkDims) % settings.chunkDims);
-
-        Debug.Log("Pos: " + posInChunkX + "," + posInChunkY + "," + posInChunkZ);
-
+        
+        //
         ModifyPointInChunk(chunkPos, posInChunkX, posInChunkY, posInChunkZ, _change);
 
         //All chunks store an extra layer of data so that they can merge seamlessly with neighbours.
@@ -107,13 +107,13 @@ public class TerrainManager : MonoBehaviour
 
     }
 
-    private void Start()
+    void Start()
     {
         Reset();
         GenerateMap();
     }
 
-    private void Update()
+    void Update()
     {
         UpdateGeneratedChunks();
         UpdateVisibleChunks();
@@ -141,6 +141,7 @@ public class TerrainManager : MonoBehaviour
         generatedChunks = new Queue<TerrainChunk>();
         chunksToGenerate = new Queue<TerrainChunk>();
         chunksToGeneratePriority = new Queue<TerrainChunk>();
+        chunksToRegenerateMesh = new Queue<TerrainChunk>();
 
         if (terrainData != null)
         {
@@ -158,14 +159,12 @@ public class TerrainManager : MonoBehaviour
         meshGenerator = MeshGeneratorFactory.Create(settingsManager.renderType);
         meshGenerator.Init(settings);
 
-        if (settings.multiThreaded)
+        if (settings.multiThreaded && meshGenerator.SupportsMultiThreading)
         {
             ThreadStart threadStart = new ThreadStart(GenerateChunksThread);
             generateChunksThread = new Thread(threadStart);
-        }
-
-        if (settings.multiThreaded && meshGenerator.SupportsMultiThreading)
             generateChunksThread.Start();
+        }            
     }
 
     public void GenerateMap()
@@ -301,6 +300,13 @@ public class TerrainManager : MonoBehaviour
         if (!settings.multiThreaded)
             GenerateQueuedChunks();
 
+        while(chunksToRegenerateMesh.Count > 0)
+        {
+            TerrainChunk currentChunk = chunksToRegenerateMesh.Dequeue();
+            meshGenerator.GenerateChunkMesh(currentChunk);
+            currentChunk.ApplyMesh();
+        }
+
         // Assign newly generated terrain meshes to their chunk game objects.
         while (generatedChunks.Count > 0)
         {
@@ -345,14 +351,23 @@ public class TerrainManager : MonoBehaviour
 
     private Vector3 ChunkAtPoint(Vector3 _point)
     {
-        return new Vector3(Mathf.Round((_point.x - settings.halfDims + 0.001f) / settings.chunkDims), Mathf.Round((_point.y - settings.halfDims + 0.001f) / settings.chunkDims), Mathf.Round((_point.z - settings.halfDims + 0.001f) / settings.chunkDims));
+        //Ensure we are rounding up from 0.5
+        float roundup = 0.001f;
+        return new Vector3(Mathf.Round((_point.x - settings.halfDims + roundup) / settings.chunkDims), Mathf.Round((_point.y - settings.halfDims + roundup) / settings.chunkDims), Mathf.Round((_point.z - settings.halfDims + roundup) / settings.chunkDims));
     }
 
     private void ModifyPointInChunk(Vector3 _chunkPos, int _posInChunkX, int _posInChunkY, int _posInChunkZ, float _changeAmount)
     {
-        terrainData[_chunkPos][_posInChunkX, _posInChunkY, _posInChunkZ] += _changeAmount;
-        meshGenerator.GenerateChunkMesh(terrainData[_chunkPos]);
-        terrainData[_chunkPos].ApplyMesh();
+        //This is a dumb hack that should be resolved in another way. Essentially checks if we're about to make the first change to a chunk, if yes add it to the queue to regenerate mesh.
+        if (!terrainData[_chunkPos].MeshOutdated)
+        {
+            chunksToRegenerateMesh.Enqueue(terrainData[_chunkPos]);
+        }
+
+        terrainData[_chunkPos][_posInChunkX, _posInChunkY, _posInChunkZ] = Mathf.Clamp(terrainData[_chunkPos][_posInChunkX, _posInChunkY, _posInChunkZ] + _changeAmount,0,1);
+
+        //meshGenerator.GenerateChunkMesh(terrainData[_chunkPos]);
+        //terrainData[_chunkPos].ApplyMesh();
     }
 
     private Vector3 RoundVec3ToInt(Vector3 _vec)

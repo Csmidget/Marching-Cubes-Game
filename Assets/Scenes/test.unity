@@ -14,16 +14,16 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
-  m_Fog: 0
-  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  m_FogMode: 3
-  m_FogDensity: 0.01
-  m_LinearFogStart: 0
-  m_LinearFogEnd: 300
+  m_Fog: 1
+  m_FogColor: {r: 0, g: 0, b: 0, a: 1}
+  m_FogMode: 1
+  m_FogDensity: 0.07
+  m_LinearFogStart: 10
+  m_LinearFogEnd: 100
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
-  m_AmbientIntensity: 1
+  m_AmbientIntensity: 1.27
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
   m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -97,7 +97,8 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 0}
+  m_LightingDataAsset: {fileID: 112000000, guid: 870d0e53545c058408f3c1ccb91e336d,
+    type: 2}
   m_UseShadowmask: 1
 --- !u!196 &4
 NavMeshSettings:
@@ -162,7 +163,7 @@ GameObject:
   - component: {fileID: 628176282}
   - component: {fileID: 628176281}
   m_Layer: 0
-  m_Name: Directional Light
+  m_Name: Point light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -181,18 +182,18 @@ Light:
   m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
-  m_Range: 73.55
-  m_SpotAngle: 30
-  m_InnerSpotAngle: 21.80208
+  m_Range: 10006.64
+  m_SpotAngle: 179
+  m_InnerSpotAngle: 0
   m_CookieSize: 10
   m_Shadows:
     m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
-    m_Strength: 0.624
+    m_Strength: 0.636
     m_Bias: 0.05
     m_NormalBias: 0.4
-    m_NearPlane: 0.2
+    m_NearPlane: 0.69
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
@@ -222,7 +223,7 @@ Light:
   m_Lightmapping: 4
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 1
+  m_BounceIntensity: 0
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
@@ -236,13 +237,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 628176280}
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1796052648}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1796052645
 GameObject:
   m_ObjectHideFlags: 0
@@ -258,6 +259,7 @@ GameObject:
   - component: {fileID: 1796052649}
   - component: {fileID: 1796052651}
   - component: {fileID: 1796052652}
+  - component: {fileID: 1796052653}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -323,14 +325,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1796052645}
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalRotation: {x: 0, y: -0.09758294, z: 0, w: 0.9952274}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 628176282}
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -11.2, z: 0}
 --- !u!114 &1796052649
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -385,8 +387,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14664ba00a19d7f4c8e5721927938d30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  power: 0.159
+  power: 0.2
   range: 1000
+  radius: 3
+--- !u!114 &1796052653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1796052645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_CameraOutput: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_Version: 2
 --- !u!1 &1973795514
 GameObject:
   m_ObjectHideFlags: 0
@@ -421,32 +455,32 @@ MonoBehaviour:
   chunkPrefab: {fileID: 4622274691877607373, guid: 2826151d2840a25428bb8b20c42ce3d9,
     type: 3}
   settingsManager:
-    renderType: 2
+    renderType: 1
     voxelTerrainSettings:
       multiThreaded: 1
       seed: 0
-      frequency: 0.023
-      clipPercent: 0.478
-      offset: {x: -9.15, y: 0, z: 0}
-      minRenderDistance: 5
-      maxRenderDistance: 10
+      frequency: 0
+      clipPercent: 0
+      offset: {x: 0, y: 0, z: 0}
+      minRenderDistance: 1
+      maxRenderDistance: 6
     marchingCubesTerrainSettings:
       multiThreaded: 1
       seed: 0
-      frequency: 0.023
-      clipPercent: 0.478
+      frequency: 0.042
+      clipPercent: 0.308
       offset: {x: -9.15, y: 0, z: 0}
       minRenderDistance: 5
       maxRenderDistance: 10
     computeShaderTerrainSettings:
       multiThreaded: 1
       seed: 0
-      frequency: 0.023
-      clipPercent: 0.478
-      offset: {x: -9.15, y: 0, z: 0}
-      minRenderDistance: 5
-      maxRenderDistance: 10
-      shader: {fileID: 7200000, guid: 0d9a9760f92783640bb1daaaee812bcb, type: 3}
+      frequency: 0
+      clipPercent: 0
+      offset: {x: 0, y: 0, z: 0}
+      minRenderDistance: 1
+      maxRenderDistance: 6
+      shader: {fileID: 0}
 --- !u!4 &1973795516
 Transform:
   m_ObjectHideFlags: 0
