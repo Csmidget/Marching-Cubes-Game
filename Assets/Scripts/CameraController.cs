@@ -7,6 +7,8 @@ public class CameraController : MonoBehaviour
 
     Rigidbody rb;
 
+    public GameObject lightSource;
+
     [Range(10, 100)]
     public float speed = 10;
 
@@ -30,6 +32,9 @@ public class CameraController : MonoBehaviour
             rb.AddRelativeForce(Vector3.back * Time.deltaTime * speed);
         if (Input.GetKey(KeyCode.D))
             rb.AddRelativeForce(Vector3.right * Time.deltaTime * speed);
+
+        if (Input.GetKeyDown(KeyCode.F))
+            lightSource.SetActive(!lightSource.activeSelf);
 
         //DEBUG
         if (Input.GetKey(KeyCode.Escape))
