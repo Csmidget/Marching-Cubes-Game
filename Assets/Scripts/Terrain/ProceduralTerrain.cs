@@ -5,7 +5,7 @@ using System.Threading;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-public class TerrainManager : MonoBehaviour
+public class ProceduralTerrain : MonoBehaviour
 {
     //######################
     #region Public Variables
@@ -15,16 +15,15 @@ public class TerrainManager : MonoBehaviour
     public Transform viewer;
     public GameObject chunkPrefab;
 
-    public TerrainSettings settingsManager;
+    public TerrainSettings terrainSettings;
 
-    public static TerrainManager Instance
+    public static ProceduralTerrain Instance
     {
         get
         {
             return instance;
         }
     }
-
 
     #endregion
     //######################
@@ -42,12 +41,12 @@ public class TerrainManager : MonoBehaviour
 
     // Multithreading
     Thread generateChunksThread;
-    private Queue<TerrainChunk> chunksToRegenerateMesh;
+    private Queue<TerrainChunk> outdatedChunks;
     private Queue<TerrainChunk> chunksToGeneratePriority;
     private Queue<TerrainChunk> chunksToGenerate;
     private Queue<TerrainChunk> generatedChunks;
 
-    private static TerrainManager instance = null;
+    private static ProceduralTerrain instance = null;
 
     // The chunk the viewer was in last update.
     Vector3 previousViewerChunk;
@@ -60,11 +59,12 @@ public class TerrainManager : MonoBehaviour
     {
         Vector3 nearestPoint = new Vector3(Mathf.Round(_point.x), Mathf.Round(_point.y), Mathf.Round(_point.z));
         Vector3 chunkPos = ChunkAtPoint(nearestPoint);
+        int dims = settings.chunkDims;
 
         //Get the real modulo value for each point (plain % operator can return negative numbers. We only want 0 - chunkDims.)
-        int posInChunkX = Mathf.RoundToInt ((nearestPoint.x % settings.chunkDims + settings.chunkDims) % settings.chunkDims);
-        int posInChunkY = Mathf.RoundToInt ((nearestPoint.y % settings.chunkDims + settings.chunkDims) % settings.chunkDims);
-        int posInChunkZ = Mathf.RoundToInt ((nearestPoint.z % settings.chunkDims + settings.chunkDims) % settings.chunkDims);
+        int posInChunkX = Mathf.RoundToInt ((nearestPoint.x % dims + dims) % dims);
+        int posInChunkY = Mathf.RoundToInt ((nearestPoint.y % dims + dims) % dims);
+        int posInChunkZ = Mathf.RoundToInt ((nearestPoint.z % dims + dims) % dims);
         
         //
         ModifyPointInChunk(chunkPos, posInChunkX, posInChunkY, posInChunkZ, _change);
@@ -72,21 +72,21 @@ public class TerrainManager : MonoBehaviour
         //All chunks store an extra layer of data so that they can merge seamlessly with neighbours.
         //We need to ensure that any neighbours storing points on the edge of the chunk are also updated.
         if (posInChunkX == 0)
-            ModifyPointInChunk(chunkPos + Vector3.left, settings.chunkDims, posInChunkY, posInChunkZ, _change);
+            ModifyPointInChunk(chunkPos + Vector3.left, dims, posInChunkY, posInChunkZ, _change);
         if (posInChunkY == 0)
-            ModifyPointInChunk(chunkPos + Vector3.down, posInChunkX, settings.chunkDims, posInChunkZ, _change);
+            ModifyPointInChunk(chunkPos + Vector3.down, posInChunkX, dims, posInChunkZ, _change);
         if (posInChunkZ == 0)
-            ModifyPointInChunk(chunkPos + Vector3.back, posInChunkX, posInChunkY, settings.chunkDims, _change);
+            ModifyPointInChunk(chunkPos + Vector3.back, posInChunkX, posInChunkY, dims, _change);
 
         if (posInChunkX == 0 && posInChunkY == 0)
-            ModifyPointInChunk(chunkPos + new Vector3(-1, -1, 0), settings.chunkDims, settings.chunkDims, posInChunkZ, _change);
+            ModifyPointInChunk(chunkPos + new Vector3(-1, -1, 0), dims, dims, posInChunkZ, _change);
         if (posInChunkX == 0 && posInChunkZ == 0)
-            ModifyPointInChunk(chunkPos + new Vector3(-1, 0, -1), settings.chunkDims, posInChunkY, settings.chunkDims, _change);
+            ModifyPointInChunk(chunkPos + new Vector3(-1, 0, -1), dims, posInChunkY, dims, _change);
         if (posInChunkY == 0 && posInChunkZ == 0) 
-            ModifyPointInChunk(chunkPos + new Vector3(0, -1, -1), posInChunkX, settings.chunkDims, settings.chunkDims, _change);
+            ModifyPointInChunk(chunkPos + new Vector3(0, -1, -1), posInChunkX, dims, dims, _change);
 
         if (posInChunkX == 0 && posInChunkY == 0 && posInChunkZ == 0)
-            ModifyPointInChunk(chunkPos + new Vector3(-1, -1, -1), settings.chunkDims, settings.chunkDims, settings.chunkDims, _change);
+            ModifyPointInChunk(chunkPos + new Vector3(-1, -1, -1), dims, dims, dims, _change);
     }
 
     #endregion
@@ -135,19 +135,19 @@ public class TerrainManager : MonoBehaviour
 
     private void Init()
     {
-        settings = settingsManager.Get();
+        settings = terrainSettings.Get();
         terrainChunkOffsets = InitializeChunkoffsets(settings.maxRenderDistance);
 
         generatedChunks = new Queue<TerrainChunk>();
         chunksToGenerate = new Queue<TerrainChunk>();
         chunksToGeneratePriority = new Queue<TerrainChunk>();
-        chunksToRegenerateMesh = new Queue<TerrainChunk>();
+        outdatedChunks = new Queue<TerrainChunk>();
 
         if (terrainData != null)
         {
-            foreach (var chunk in terrainData)
+            foreach (var chunk in terrainData.Values)
             {
-                chunk.Value.Destroy();
+                chunk.Destroy();
             }
         }
         terrainData = new Dictionary<Vector3, TerrainChunk>();
@@ -156,7 +156,7 @@ public class TerrainManager : MonoBehaviour
 
         noiseMap = new NoiseMap3D(settings.seed, settings.frequency);
         
-        meshGenerator = MeshGeneratorFactory.Create(settingsManager.renderType);
+        meshGenerator = MeshGeneratorFactory.Create(terrainSettings.renderType);
         meshGenerator.Init(settings);
 
         if (settings.multiThreaded && meshGenerator.SupportsMultiThreading)
@@ -171,7 +171,7 @@ public class TerrainManager : MonoBehaviour
     {
         Init();
        
-        RenderVisibleChunks(settings.minRenderDistance, GetViewerChunk(), true);
+        RenderVisibleChunks(GetViewerChunk(), true);
     }
 
     // Generates a list of offsets for all chunks within render distance sorted in order of distance. Runs once and generated list is cached for reuse.
@@ -194,58 +194,76 @@ public class TerrainManager : MonoBehaviour
 
         return outList;
     }
-
     #endregion
     //######################
     #region Chunk Rendering
 
     private void UpdateVisibleChunks()
     {
-        Vector3 viewerChunk = GetViewerChunk();
+        Stopwatch stopwatch = new Stopwatch();
 
-        if (viewerChunk == previousViewerChunk)
+        stopwatch.Start();
+
+        Vector3 viewerChunkPos = GetViewerChunk();
+
+        if (viewerChunkPos == previousViewerChunk)
             return;
+       
+        float sqrRenderDistance = settings.maxRenderDistance * settings.maxRenderDistance;
 
+        //Clear any chunks that are no longer within render distance (They remain cached but are disabled)
         for (int i = 0; i < activeChunks.Count; i++)
         {
-            activeChunks[i].SetActive(false);
+            if ((viewerChunkPos - activeChunks[i].position).sqrMagnitude > sqrRenderDistance)
+            {
+                activeChunks[i].SetActive(false);
+                activeChunks.RemoveAt(i);
+            }
         }
-        activeChunks.Clear();
 
-        RenderVisibleChunks(settings.maxRenderDistance, viewerChunk, false);
+        RenderVisibleChunks(viewerChunkPos, false);
 
-        previousViewerChunk = viewerChunk;
+        previousViewerChunk = viewerChunkPos;
+
+        stopwatch.Stop();
+
+        Debug.Log(stopwatch.ElapsedMilliseconds);
+
     }
 
-    private void RenderVisibleChunks(int _renderDistance, Vector3 _viewerChunk, bool _generateImmediately)
+    private void RenderVisibleChunks(in Vector3 _viewerChunk, in bool _generateImmediately)
     {
+        float sqrMinRenderDistance = settings.minRenderDistance * settings.minRenderDistance;
+        float sqrMaxRenderDistance = settings.maxRenderDistance * settings.maxRenderDistance;
+
         for (int i = 0; i < terrainChunkOffsets.Count; i++)
         {
-            if (terrainChunkOffsets[i].magnitude > _renderDistance)
+            if (terrainChunkOffsets[i].sqrMagnitude > sqrMaxRenderDistance)
                 break;
 
-            RenderChunk(_viewerChunk, terrainChunkOffsets[i], _generateImmediately);
+            RenderChunk(_viewerChunk, terrainChunkOffsets[i], _generateImmediately, sqrMinRenderDistance);
         }
     }
 
-    private void RenderChunk(in Vector3 _viewerChunk, Vector3 _chunkOffset, bool _generateImmediately)
+    private void RenderChunk(in Vector3 _viewerChunk, in Vector3 _chunkOffset, in bool _generateImmediately, in float _sqrMinRenderDistance)
     {
         Vector3 chunkPos = _viewerChunk + _chunkOffset;
 
-        if (terrainData.ContainsKey(chunkPos))
+        if (terrainData.TryGetValue(chunkPos, out TerrainChunk chunk))
         {
             // Inefficient. Should be a much better way of doing this.
             // Checks if a chunk should now be generated with high priority (For chunks that do not yet have a mesh and are within minimum render distance)
-            if (!terrainData[chunkPos].HasMesh() && _chunkOffset.magnitude <= settings.minRenderDistance)
-                chunksToGeneratePriority.Enqueue(terrainData[chunkPos]);
+            if (!chunk.HasMesh && _chunkOffset.sqrMagnitude <= _sqrMinRenderDistance)
+                chunksToGeneratePriority.Enqueue(chunk);
 
-            terrainData[chunkPos].SetActive(true);
-            activeChunks.Add(terrainData[chunkPos]);
+            if (!chunk.IsActive)
+            {
+                chunk.SetActive(true);
+                activeChunks.Add(terrainData[chunkPos]);
+            }
         }
         else
         {
-            TerrainChunk chunk;
-
             if (_generateImmediately)
             {
                 chunk = CreateChunk(chunkPos);
@@ -255,7 +273,7 @@ public class TerrainManager : MonoBehaviour
                 chunk = CreateEmptyChunk(chunkPos);
 
                 // sqrmagnitude would be more efficient. Would need to store sqrMinRenderDistance aswell
-                if (_chunkOffset.magnitude <= settings.minRenderDistance)
+                if (_chunkOffset.sqrMagnitude <= _sqrMinRenderDistance)
                     chunksToGeneratePriority.Enqueue(chunk);
                 else
                     chunksToGenerate.Enqueue(chunk);
@@ -300,9 +318,9 @@ public class TerrainManager : MonoBehaviour
         if (!settings.multiThreaded)
             GenerateQueuedChunks();
 
-        while(chunksToRegenerateMesh.Count > 0)
+        while(outdatedChunks.Count > 0)
         {
-            TerrainChunk currentChunk = chunksToRegenerateMesh.Dequeue();
+            TerrainChunk currentChunk = outdatedChunks.Dequeue();
             meshGenerator.GenerateChunkMesh(currentChunk);
             currentChunk.ApplyMesh();
         }
@@ -319,7 +337,7 @@ public class TerrainManager : MonoBehaviour
 
     private TerrainChunk GenerateChunk(TerrainChunk _chunk)
     {
-        if (_chunk.HasMesh())
+        if (_chunk.HasMesh)
             return _chunk;
 
         int i = 0;
@@ -349,25 +367,20 @@ public class TerrainManager : MonoBehaviour
         return ChunkAtPoint(viewer.position);
     }
 
-    private Vector3 ChunkAtPoint(Vector3 _point)
+    private Vector3 ChunkAtPoint(in Vector3 _point)
     {
         //Ensure we are rounding up from 0.5
         float roundup = 0.001f;
         return new Vector3(Mathf.Round((_point.x - settings.halfDims + roundup) / settings.chunkDims), Mathf.Round((_point.y - settings.halfDims + roundup) / settings.chunkDims), Mathf.Round((_point.z - settings.halfDims + roundup) / settings.chunkDims));
     }
 
-    private void ModifyPointInChunk(Vector3 _chunkPos, int _posInChunkX, int _posInChunkY, int _posInChunkZ, float _changeAmount)
+    private void ModifyPointInChunk(in Vector3 _chunkPos, in int _posInChunkX, in int _posInChunkY, in int _posInChunkZ, in float _changeAmount)
     {
         //This is a dumb hack that should be resolved in another way. Essentially checks if we're about to make the first change to a chunk, if yes add it to the queue to regenerate mesh.
         if (!terrainData[_chunkPos].MeshOutdated)
-        {
-            chunksToRegenerateMesh.Enqueue(terrainData[_chunkPos]);
-        }
+            outdatedChunks.Enqueue(terrainData[_chunkPos]);
 
         terrainData[_chunkPos][_posInChunkX, _posInChunkY, _posInChunkZ] = Mathf.Clamp(terrainData[_chunkPos][_posInChunkX, _posInChunkY, _posInChunkZ] + _changeAmount,0,1);
-
-        //meshGenerator.GenerateChunkMesh(terrainData[_chunkPos]);
-        //terrainData[_chunkPos].ApplyMesh();
     }
 
     private Vector3 RoundVec3ToInt(Vector3 _vec)

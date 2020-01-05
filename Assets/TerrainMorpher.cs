@@ -11,12 +11,12 @@ public class TerrainMorpher : MonoBehaviour
     public float range;
     [Range (1,5)]
     public float radius;
-    private TerrainManager terrainManager;
+    private ProceduralTerrain terrainManager;
 
     // Start is called before the first frame update
     void Start()
     {
-        terrainManager = TerrainManager.Instance;
+        terrainManager = ProceduralTerrain.Instance;
     }
 
     // Update is called once per frame

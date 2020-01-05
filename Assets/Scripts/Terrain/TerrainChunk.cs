@@ -12,7 +12,7 @@ public class TerrainChunk
     GameObject chunkObject;
 
     public float[] terrainMap;
-    public Vector3 chunkPosition;
+    public Vector3 position;
     public Vector3 rawPosition;
     public int dims;
     private int rawDims;
@@ -25,17 +25,17 @@ public class TerrainChunk
 
     public TerrainChunk(Vector3 _position, int _dims, Transform _parent, GameObject _chunkPrefab)
     {
-        chunkPosition = _position;
+        position = _position;
         dims = _dims;
         rawDims = dims + 1;
         meshData = null;
         
         terrainMap = new float[rawDims * rawDims * rawDims];
 
-        rawPosition = new Vector3(chunkPosition.x * dims, chunkPosition.y * dims, chunkPosition.z * dims);
+        rawPosition = new Vector3(position.x * dims, position.y * dims, position.z * dims);
 
         chunkObject = GameObject.Instantiate(_chunkPrefab, _parent);
-        chunkObject.name = "Chunk " + chunkPosition;
+        chunkObject.name = "Chunk " + position;
         chunkObject.transform.position = rawPosition;
         meshFilter = chunkObject.GetComponent<MeshFilter>();
         meshCollider = chunkObject.GetComponent<MeshCollider>();
@@ -56,15 +56,19 @@ public class TerrainChunk
         get { return terrainMap[_xyz.x + rawDims * _xyz.y + rawDims * rawDims * _xyz.z]; }
         set { terrainMap[_xyz.x + rawDims * _xyz.y + rawDims * rawDims * _xyz.z] = value; MeshOutdated = true; }
     }
+    public bool HasMesh
+    {
+        get { return meshData != null; }
+    }
+
+    public bool IsActive
+    {
+        get { return chunkObject.activeSelf; }
+    }
 
     public void SetMeshData(MeshData _meshData)
     {
         meshData = _meshData;
-    }
-
-    public bool HasMesh()
-    {
-        return meshData != null;
     }
 
     public void ApplyMesh()
@@ -83,11 +87,6 @@ public class TerrainChunk
     public void SetActive(bool visible)
     {
         chunkObject.SetActive(visible);
-    }
-
-    public bool IsVisible()
-    {
-        return chunkObject.activeSelf;
     }
 
     /// <summary>
