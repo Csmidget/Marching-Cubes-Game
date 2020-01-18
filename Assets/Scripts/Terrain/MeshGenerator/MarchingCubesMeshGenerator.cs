@@ -8,7 +8,7 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
 {
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
     {
-        MeshData meshData = new MeshData();
+        MeshData meshData = new MeshData(false);
         Dictionary<Vector3, List<int>> verticesDict = new Dictionary<Vector3, List<int>>();
         int verticesIndex = 0;
 
@@ -45,60 +45,36 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
                         Vector3 vertex2 = InterpBetweenTerrainPoints(_chunk, vertex2A, vertex2B);
                         Vector3 vertex3 = InterpBetweenTerrainPoints(_chunk, vertex3A, vertex3B);
 
-                        //Vector3 normal = Vector3.Cross(vertex2 - vertex1, vertex3 - vertex1);
+                        Vector3 normal = Vector3.Cross(vertex2 - vertex1, vertex3 - vertex1);
 
                         vertices.Add(vertex1);
                         vertices.Add(vertex2);
                         vertices.Add(vertex3);
 
-                        //normals.Add(normal);
-                        //normals.Add(normal);
-                        //normals.Add(normal);
+                        normals.Add(normal);
+                        normals.Add(normal);
+                        normals.Add(normal);
                     }
 
                     AddMarchingCube(meshData, vertices, normals, ref verticesIndex, ref verticesDict);
                 }
             }                
         }
-        //AverageNormals(meshData, verticesDict);
         _chunk.SetMeshData(meshData);
     }
 
     public void AddMarchingCube(MeshData _meshData, List<Vector3> _vertices, List<Vector3> _normals, ref int _verticesIndex, ref Dictionary<Vector3, List<int>> _verticesDict)
     {
         _meshData.vertices.AddRange(_vertices);
-        //_meshData.normals.AddRange(_normals);
-
+        _meshData.normals.AddRange(_normals);
         for (int i = 0; i < _vertices.Count; i++)
         {
-            //if (_verticesDict.ContainsKey(_vertices[i]))
-            //    _verticesDict[_vertices[i]].Add(_verticesIndex + i);
-            //else
-            //    _verticesDict.Add(_vertices[i], new List<int>() { _verticesIndex + i });
-
             _meshData.triangles.Add(_verticesIndex + i);
         }
 
         _verticesIndex += _vertices.Count;
     }
 
-    //public void AverageNormals(MeshData _meshData, Dictionary<Vector3, List<int>> _verticesDict)
-    //{
-    //    foreach (var vertex in _verticesDict.Keys)
-    //    {
-    //        Vector3 normal = Vector3.zero;
-    //        List<int> vertexLocations = _verticesDict[vertex];
-    //        foreach (var vertexLoc in vertexLocations)
-    //        {
-    //            normal += _meshData.normals[vertexLoc];
-    //        }
-    //
-    //        foreach (var vertexLoc in vertexLocations)
-    //        {
-    //             _meshData.normals[vertexLoc] = normal;
-    //        }
-    //    }
-    //}
 
     private Vector3 InterpBetweenTerrainPoints(in TerrainChunk _chunk, Vector3 _p1, Vector3 _p2)
     {

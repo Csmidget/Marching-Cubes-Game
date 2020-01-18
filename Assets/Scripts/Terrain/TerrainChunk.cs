@@ -73,6 +73,9 @@ public class TerrainChunk
 
     public void ApplyMesh()
     {
+        Mesh.Destroy(meshFilter.sharedMesh);
+        Mesh.Destroy(meshCollider.sharedMesh);
+
         meshFilter.sharedMesh = meshData.CreateMesh();
         meshCollider.sharedMesh = meshData.CreateMesh();
         MeshOutdated = false;
