@@ -294,6 +294,19 @@ static const uint edgeToPointA[12] = { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3};
 
 static const uint edgeToPointB[12] = { 1, 2, 3, 0, 5, 6, 7, 4, 4, 5, 6, 7 };
 
+//This DEPENDS on rawDimLen being 17. Needs to be recalculated otherwise.
+//Offset in terrainData for values pointed to by vector pointToVertex
+static const int pointToVertexOffsets[8] = {
+    0,
+    1,
+    290,
+    289,
+    17,
+    18,
+    307,
+    306
+};
+
 static const uint3 pointToVertex[8] = {
     uint3( 0, 0, 0 ),
     uint3( 1, 0, 0 ),

@@ -17,27 +17,22 @@ AppendStructuredBuffer<Triangle> _resultTriangles;
 
 CBUFFER_START(Params)
 float _clipValue;
-uint dimLen;
 StructuredBuffer<float> _terrainValues;
 CBUFFER_END
 
 // FUNCTIONS
-float GetTerrainValue(uint3 _xyz)
-{
-    uint rawDimLen = dimLen + 1;
-    return _terrainValues[_xyz.x + rawDimLen * _xyz.y + rawDimLen * rawDimLen * _xyz.z];
-}
 
-void GenerateTerrainVals(uint3 xyz, out float vals[8])
+void GenerateTerrainVals(uint3 _xyz, out float vals[8])
 {    
-    vals[0] = GetTerrainValue(xyz + pointToVertex[0]);
-    vals[1] = GetTerrainValue(xyz + pointToVertex[1]);
-    vals[2] = GetTerrainValue(xyz + pointToVertex[2]);
-    vals[3] = GetTerrainValue(xyz + pointToVertex[3]);
-    vals[4] = GetTerrainValue(xyz + pointToVertex[4]);
-    vals[5] = GetTerrainValue(xyz + pointToVertex[5]);
-    vals[6] = GetTerrainValue(xyz + pointToVertex[6]);
-    vals[7] = GetTerrainValue(xyz + pointToVertex[7]);
+	uint xyz = _xyz.x + 17 * _xyz.y + 17 * 17 * _xyz.z;
+    vals[0] = _terrainValues[xyz + pointToVertexOffsets[0]];
+    vals[1] = _terrainValues[xyz + pointToVertexOffsets[1]];
+    vals[2] = _terrainValues[xyz + pointToVertexOffsets[2]];
+    vals[3] = _terrainValues[xyz + pointToVertexOffsets[3]];
+    vals[4] = _terrainValues[xyz + pointToVertexOffsets[4]];
+    vals[5] = _terrainValues[xyz + pointToVertexOffsets[5]];
+    vals[6] = _terrainValues[xyz + pointToVertexOffsets[6]];
+    vals[7] = _terrainValues[xyz + pointToVertexOffsets[7]];
 }
 
 uint GetCubeIndex(in float _vals[8])

@@ -9,18 +9,9 @@ using UnityEngine;
 
 public class MarchingCubesJobMeshGenerator : IMeshGenerator
 {
-    SolveMarchingCubeJob job;
-
-    public override void Dispose()
-    {
-        job.Dispose();
-    }
-
     public override void Init(TerrainSettings.TerrainInnerSettings _settings)
     {
         base.Init(_settings);
-
-        job = new SolveMarchingCubeJob(_settings.chunkDims, clipValue);
     }
 
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
@@ -30,11 +21,11 @@ public class MarchingCubesJobMeshGenerator : IMeshGenerator
         List<Vector3> normals = new List<Vector3>();
         List<int> triangles = new List<int>();
 
-        job.ClearVertices();
+        var job = new SolveMarchingCubeJob(_chunk.dims, clipValue);
+
         job.terrainMap.CopyFrom(_chunk.terrainMap);
 
-        var handle = job.Schedule(_chunk.Size(), 64);
-        JobHandle.ScheduleBatchedJobs();
+        var handle = job.Schedule(_chunk.Size(), 8);
         handle.Complete();
 
         int triCount = 0;
@@ -61,6 +52,8 @@ public class MarchingCubesJobMeshGenerator : IMeshGenerator
         meshData.triangles = triangles;
         meshData.normals = normals;
 
+        job.Dispose();
+
         _chunk.SetMeshData(meshData);
     }
 
@@ -72,18 +65,14 @@ public class MarchingCubesJobMeshGenerator : IMeshGenerator
         readonly public float clipVal;
 
         [NativeDisableParallelForRestriction]
-        public NativeArray<float> terrainMap;
-        [NativeDisableParallelForRestriction]
+        [WriteOnly]
         public NativeArray<float3> vertices;
         [NativeDisableParallelForRestriction]
+        [WriteOnly]
         public NativeArray<float3> normals;
 
-        public readonly NativeArray<int> edgeTable;
-        public readonly NativeArray<int> edgeToPointA;
-        public readonly NativeArray<int> edgeToPointB;
-        public readonly NativeArray<int3> pointToVertex;
-        public readonly NativeArray<int> triTable;
-
+        [ReadOnly]
+        public NativeArray<float> terrainMap;
 
         public SolveMarchingCubeJob(in int _dims, in float _clipVal)
         {
@@ -93,45 +82,16 @@ public class MarchingCubesJobMeshGenerator : IMeshGenerator
             int size = dims * dims * dims;
             int rawSize = rawDims * rawDims * rawDims;
 
-            vertices = new NativeArray<float3>(size * 15, Allocator.Persistent);
-            normals = new NativeArray<float3>(size * 15, Allocator.Persistent);
-            terrainMap = new NativeArray<float>(rawSize, Allocator.Persistent);
-
-            edgeTable = new NativeArray<int>(edgeTableGlobal.Length, Allocator.Persistent);
-            edgeTable.CopyFrom(edgeTableGlobal);
-
-            edgeToPointA = new NativeArray<int>(edgeToPointAGlobal.Length, Allocator.Persistent);
-            edgeToPointA.CopyFrom(edgeToPointAGlobal);
-
-            edgeToPointB = new NativeArray<int>(edgeToPointBGlobal.Length, Allocator.Persistent);
-            edgeToPointB.CopyFrom(edgeToPointBGlobal);
-
-            pointToVertex = new NativeArray<int3>(pointToVertexGlobal.Length, Allocator.Persistent);
-            pointToVertex.CopyFrom(pointToVertexGlobal);
-
-            triTable = new NativeArray<int>(triTableGlobal.Length, Allocator.Persistent);
-            triTable.CopyFrom(triTableGlobal);
+            vertices = new NativeArray<float3>(size * 15, Allocator.TempJob);
+            normals = new NativeArray<float3>(size * 15, Allocator.TempJob);
+            terrainMap = new NativeArray<float>(rawSize, Allocator.TempJob);
         }
-        public void ClearVertices()
-        {
-            //float3 defFloat = new float3(-1, -1, -1);
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                vertices[i] = float3.zero;
-            }
-        }
-
 
         public void Dispose()
         {
             terrainMap.Dispose();
             vertices.Dispose();
             normals.Dispose();
-            edgeTable.Dispose();
-            edgeToPointA.Dispose();
-            edgeToPointB.Dispose();
-            pointToVertex.Dispose();
-            triTable.Dispose();
         }
 
         public void Execute(int index)
@@ -173,8 +133,6 @@ public class MarchingCubesJobMeshGenerator : IMeshGenerator
                 vertices[verticesStart + i + 2] = vertex3;
 
                 normals[verticesStart + i] = normal;
-              //  normals[verticesStart + i + 1] = normal;
-              //  normals[verticesStart + i + 2] = normal;
             }
         }
 
@@ -222,7 +180,8 @@ public class MarchingCubesJobMeshGenerator : IMeshGenerator
 
     #region DataTables
 
-    static readonly int[] edgeTableGlobal =  {
+    [ReadOnly]
+    static readonly int[] edgeTable =  {
         0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
         0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
         0x190, 0x99 , 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
@@ -256,7 +215,8 @@ public class MarchingCubesJobMeshGenerator : IMeshGenerator
         0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c,
         0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0 };
 
-    static readonly int[] triTableGlobal = {
+    [ReadOnly]
+    static readonly int[] triTable = {
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -514,11 +474,14 @@ public class MarchingCubesJobMeshGenerator : IMeshGenerator
         0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
-    static readonly int[] edgeToPointAGlobal = { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3 };
+    [ReadOnly]
+    static readonly int[] edgeToPointA = { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3 };
 
-    static readonly int[] edgeToPointBGlobal = { 1, 2, 3, 0, 5, 6, 7, 4, 4, 5, 6, 7 };
+    [ReadOnly]
+    static readonly int[] edgeToPointB = { 1, 2, 3, 0, 5, 6, 7, 4, 4, 5, 6, 7 };
 
-    static readonly int3[] pointToVertexGlobal = {
+    [ReadOnly]
+    static readonly int3[] pointToVertex = {
             new int3( 0, 0, 0 ),
             new int3( 1, 0, 0 ),
             new int3( 1, 0, 1 ),

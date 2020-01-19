@@ -439,7 +439,7 @@ MonoBehaviour:
   chunkPrefab: {fileID: 4622274691877607373, guid: 2826151d2840a25428bb8b20c42ce3d9,
     type: 3}
   terrainSettings:
-    renderType: 3
+    renderType: 2
     voxelTerrainSettings:
       multiThreaded: 1
       seed: 0

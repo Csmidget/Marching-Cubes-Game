@@ -44,7 +44,7 @@ class ComputeShaderMeshGenerator : IMeshGenerator
 
         shader.SetBuffer(kernel, "_terrainValues", terrainValues);
         shader.SetBuffer(kernel, "_resultTriangles", resultTriangles);
-        shader.SetInt("dimLen", dims);    
+       // shader.SetInt("dimLen", dims);    
     }
 
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
