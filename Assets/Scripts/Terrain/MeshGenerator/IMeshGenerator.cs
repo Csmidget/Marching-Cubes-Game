@@ -38,7 +38,10 @@ public static class MeshGeneratorFactory
                 return new MarchingCubesMeshGenerator();
             case RenderType.ComputeShader:
                 return new ComputeShaderMeshGenerator();
+            case RenderType.MarchingCubesJob:
+                return new MarchingCubesJobMeshGenerator();
         }
-        return null;
+
+        throw new System.Exception("Unable to create MeshGenerator for RenderType: " + _renderType.ToString());
     }
 }

@@ -170,8 +170,12 @@ public class ProceduralTerrain : MonoBehaviour
     public void GenerateMap()
     {
         Init();
-       
+
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
         RenderVisibleChunks(GetViewerChunk(), true);
+        stopwatch.Stop();
+        Debug.Log("Mapgen time: " + stopwatch.Elapsed);
     }
 
     // Generates a list of offsets for all chunks within render distance sorted in order of distance. Runs once and generated list is cached for reuse.
@@ -312,10 +316,12 @@ public class ProceduralTerrain : MonoBehaviour
     private void UpdateGeneratedChunks()
     {
 
-        if (!generateChunksThread.IsAlive && settings.multiThreaded && meshGenerator.SupportsMultiThreading)
-            generateChunksThread.Start();
-
-        if (!settings.multiThreaded)
+        if (settings.multiThreaded && meshGenerator.SupportsMultiThreading)
+        {
+            if (!generateChunksThread.IsAlive)
+                generateChunksThread.Start();
+        }
+        else
             GenerateQueuedChunks();
 
         while(outdatedChunks.Count > 0)

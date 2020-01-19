@@ -32,7 +32,7 @@ class ComputeShaderMeshGenerator : IMeshGenerator
         settings = (TerrainSettings.ComputeShaderTerrainSettings)_settings;
 
         shader = settings.shader;
-        shader.SetFloat("_clipValue", clipValue);
+        shader.SetFloat("_clipValue", _settings.clipPercent);
         kernel = shader.FindKernel("CSMain");
 
         int dims = settings.chunkDims;
