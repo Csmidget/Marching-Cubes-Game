@@ -434,12 +434,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6160ff97e9f090e488dca5a70008c172, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  autoUpdate: 1
+  autoUpdate: 0
   viewer: {fileID: 1796052648}
   chunkPrefab: {fileID: 4622274691877607373, guid: 2826151d2840a25428bb8b20c42ce3d9,
     type: 3}
   terrainSettings:
-    renderType: 1
+    renderType: 3
     voxelTerrainSettings:
       multiThreaded: 1
       seed: 0
@@ -459,12 +459,20 @@ MonoBehaviour:
     computeShaderTerrainSettings:
       multiThreaded: 1
       seed: 0
-      frequency: 0
-      clipPercent: 0
+      frequency: 0.0323
+      clipPercent: 0.3
       offset: {x: 0, y: 0, z: 0}
-      minRenderDistance: 1
-      maxRenderDistance: 6
-      shader: {fileID: 0}
+      minRenderDistance: 6
+      maxRenderDistance: 10
+      shader: {fileID: 7200000, guid: 0d9a9760f92783640bb1daaaee812bcb, type: 3}
+    marchingCubesJobTerrainSettings:
+      multiThreaded: 0
+      seed: 0
+      frequency: 0.0323
+      clipPercent: 0.3
+      offset: {x: 0, y: 0, z: 0}
+      minRenderDistance: 6
+      maxRenderDistance: 10
 --- !u!4 &1973795516
 Transform:
   m_ObjectHideFlags: 0
