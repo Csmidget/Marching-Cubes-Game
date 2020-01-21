@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum RenderType { Voxel_LEGACY, MarchingCubes, ComputeShader, MarchingCubesJob }
+public enum RenderType { Voxel_LEGACY, MarchingCubes, ComputeShader, MarchingCubesParallelJob, MarchingCubeIndividualJob }
 
 [System.Serializable]
 public class TerrainSettings 
@@ -20,7 +20,10 @@ public class TerrainSettings
     private ComputeShaderTerrainSettings computeShaderTerrainSettings;
     [SerializeField]
     [ConditionalHide("renderType", 3)]
-    private TerrainInnerSettings marchingCubesJobTerrainSettings;
+    private TerrainInnerSettings mCubesParallelJobTerrainSettings;
+    [SerializeField]
+    [ConditionalHide("renderType", 4)]
+    private TerrainInnerSettings mCubesIndividualJobTerrainSettings;
 
     public TerrainInnerSettings Get()
     {
@@ -32,8 +35,10 @@ public class TerrainSettings
                 return marchingCubesTerrainSettings;
             case RenderType.ComputeShader:
                 return computeShaderTerrainSettings;
-            case RenderType.MarchingCubesJob:
-                return marchingCubesJobTerrainSettings;
+            case RenderType.MarchingCubesParallelJob:
+                return marchingCubesTerrainSettings;
+            case RenderType.MarchingCubeIndividualJob:
+                return marchingCubesTerrainSettings;
         }
 
         throw new System.Exception("Error: Unable to generate settings for type: " + renderType);

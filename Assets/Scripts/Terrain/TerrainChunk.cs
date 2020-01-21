@@ -84,8 +84,8 @@ public class TerrainChunk
             Mesh.DestroyImmediate(meshCollider.sharedMesh);
         }
 
-        meshFilter.sharedMesh = meshData.CreateMesh();
-        meshCollider.sharedMesh = meshData.CreateMesh();
+        meshFilter.sharedMesh = meshData.CreateMesh(false);
+        meshCollider.sharedMesh = meshData.CreateMesh(true);
         MeshOutdated = false;
     }
 

@@ -9,8 +9,13 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
     {
         MeshData meshData = new MeshData(false);
-        Dictionary<Vector3, List<int>> verticesDict = new Dictionary<Vector3, List<int>>();
         int verticesIndex = 0;
+
+        List<Vector3> vertices = new List<Vector3>(_chunk.Size()*15);
+        List<Vector3> normals = new List<Vector3>(_chunk.Size() * 15);
+        List<int> triangles = new List<int>(_chunk.Size() * 15);
+        List<Vector3> cubeVertices = new List<Vector3>(15);
+        List<Vector3> cubeNormals = new List<Vector3>(15);
 
         for (int x = 0; x < _chunk.dims; x++)
         {
@@ -26,9 +31,9 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
                         continue;
 
                     Vector3 xyz = new Vector3(x, y, z);
-                                     
-                    List<Vector3> vertices = new List<Vector3>();
-                    List<Vector3> normals = new List<Vector3>();
+
+                    cubeVertices.Clear();
+                    cubeNormals.Clear();
 
                     for (int i = 0; triTable[cubeIndex, i] != -1; i+=3)
                     {
@@ -47,34 +52,32 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
 
                         Vector3 normal = Vector3.Cross(vertex2 - vertex1, vertex3 - vertex1);
 
-                        vertices.Add(vertex1);
-                        vertices.Add(vertex2);
-                        vertices.Add(vertex3);
+                        cubeVertices.Add(vertex1);
+                        cubeVertices.Add(vertex2);
+                        cubeVertices.Add(vertex3);
 
-                        normals.Add(normal);
-                        normals.Add(normal);
-                        normals.Add(normal);
+                        cubeNormals.Add(normal);
+                        cubeNormals.Add(normal);
+                        cubeNormals.Add(normal);
                     }
 
-                    AddMarchingCube(meshData, vertices, normals, ref verticesIndex, ref verticesDict);
+                    vertices.AddRange(cubeVertices);
+                    normals.AddRange(cubeNormals);
+                    for (int i = 0; i < cubeVertices.Count; i++)
+                    {
+                        triangles.Add(verticesIndex + i);
+                    }
+
+                    verticesIndex += cubeVertices.Count;
                 }
             }                
         }
+        meshData.vertices = vertices.ToArray();
+        meshData.triangles = triangles.ToArray();
+        meshData.normals = normals.ToArray();
+
         _chunk.SetMeshData(meshData);
     }
-
-    public void AddMarchingCube(MeshData _meshData, List<Vector3> _vertices, List<Vector3> _normals, ref int _verticesIndex, ref Dictionary<Vector3, List<int>> _verticesDict)
-    {
-        _meshData.vertices.AddRange(_vertices);
-        _meshData.normals.AddRange(_normals);
-        for (int i = 0; i < _vertices.Count; i++)
-        {
-            _meshData.triangles.Add(_verticesIndex + i);
-        }
-
-        _verticesIndex += _vertices.Count;
-    }
-
 
     private Vector3 InterpBetweenTerrainPoints(in TerrainChunk _chunk, Vector3 _p1, Vector3 _p2)
     {
@@ -104,7 +107,7 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
 
     #region DataTables
 
-    int[] edgeTable = new int[] {
+    static readonly int[] edgeTable = new int[] {
         0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
         0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
         0x190, 0x99 , 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
@@ -138,7 +141,7 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
         0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c,
         0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0 };
 
-    int[,] triTable = new int[,]{
+    static readonly int[,] triTable = new int[,]{
         {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
         {0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
         {0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
@@ -396,11 +399,11 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
         {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
         {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
 
-    int[] edgeToPointA = { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3 };
+    static readonly int[] edgeToPointA = { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3 };
 
-    int[] edgeToPointB = { 1, 2, 3, 0, 5, 6, 7, 4, 4, 5, 6, 7 };
+    static readonly int[] edgeToPointB = { 1, 2, 3, 0, 5, 6, 7, 4, 4, 5, 6, 7 };
 
-    Vector3[] pointToVertex = {
+    static readonly Vector3[] pointToVertex = {
     new Vector3( 0, 0, 0 ),
     new Vector3( 1, 0, 0 ),
     new Vector3( 1, 0, 1 ),

@@ -44,58 +44,58 @@ public class VoxelMeshGenerator : IMeshGenerator
 
     public void AddSquare(MeshData _meshData, Vector3 _inner, Vector3 _direction, ref int _verticesIndex)
     {
-        if (Mathf.Abs(_direction.x) == 1.0f)
-        {
-            float x = _inner.x + _direction.x * 0.5f;
-            _meshData.vertices.Add(new Vector3(x, _inner.y + 0.5f, _inner.z + 0.5f));
-            _meshData.vertices.Add(new Vector3(x, _inner.y - 0.5f, _inner.z + 0.5f));
-            _meshData.vertices.Add(new Vector3(x, _inner.y + 0.5f, _inner.z - 0.5f));
-            _meshData.vertices.Add(new Vector3(x, _inner.y - 0.5f, _inner.z - 0.5f));
-        }
-        else if (Mathf.Abs(_direction.y) == 1.0f)
-        {
-            float y = _inner.y + _direction.y * 0.5f;
-            _meshData.vertices.Add(new Vector3(_inner.x + 0.5f, y, _inner.z + 0.5f));
-            _meshData.vertices.Add(new Vector3(_inner.x - 0.5f, y, _inner.z + 0.5f));
-            _meshData.vertices.Add(new Vector3(_inner.x + 0.5f, y, _inner.z - 0.5f));
-            _meshData.vertices.Add(new Vector3(_inner.x - 0.5f, y, _inner.z - 0.5f));
-        }
-        else if (Mathf.Abs(_direction.z) == 1.0f)
-        {
-            float z = _inner.z + _direction.z * 0.5f;
-            _meshData.vertices.Add(new Vector3(_inner.x + 0.5f, _inner.y + 0.5f, z));
-            _meshData.vertices.Add(new Vector3(_inner.x - 0.5f, _inner.y + 0.5f, z));
-            _meshData.vertices.Add(new Vector3(_inner.x + 0.5f, _inner.y - 0.5f, z));
-            _meshData.vertices.Add(new Vector3(_inner.x - 0.5f, _inner.y - 0.5f, z));
-        }
-
-        _meshData.normals.Add(_direction);
-        _meshData.normals.Add(_direction);
-        _meshData.normals.Add(_direction);
-        _meshData.normals.Add(_direction);
-
-        if (_direction.x - _direction.y + _direction.z > 0)
-        {
-            _meshData.triangles.Add(_verticesIndex);
-            _meshData.triangles.Add(_verticesIndex + 1);
-            _meshData.triangles.Add(_verticesIndex + 2);
-
-            _meshData.triangles.Add(_verticesIndex + 1);
-            _meshData.triangles.Add(_verticesIndex + 3);
-            _meshData.triangles.Add(_verticesIndex + 2);
-        }
-        else
-        {
-            _meshData.triangles.Add(_verticesIndex);
-            _meshData.triangles.Add(_verticesIndex + 2);
-            _meshData.triangles.Add(_verticesIndex + 1);
-
-            _meshData.triangles.Add(_verticesIndex + 3);
-            _meshData.triangles.Add(_verticesIndex + 1);
-            _meshData.triangles.Add(_verticesIndex + 2);
-        }
-
-        _verticesIndex += 4;
+   //     if (Mathf.Abs(_direction.x) == 1.0f)
+   //     {
+   //         float x = _inner.x + _direction.x * 0.5f;
+   //         _meshData.vertices.Add(new Vector3(x, _inner.y + 0.5f, _inner.z + 0.5f));
+   //         _meshData.vertices.Add(new Vector3(x, _inner.y - 0.5f, _inner.z + 0.5f));
+   //         _meshData.vertices.Add(new Vector3(x, _inner.y + 0.5f, _inner.z - 0.5f));
+   //         _meshData.vertices.Add(new Vector3(x, _inner.y - 0.5f, _inner.z - 0.5f));
+   //     }
+   //     else if (Mathf.Abs(_direction.y) == 1.0f)
+   //     {
+   //         float y = _inner.y + _direction.y * 0.5f;
+   //         _meshData.vertices.Add(new Vector3(_inner.x + 0.5f, y, _inner.z + 0.5f));
+   //         _meshData.vertices.Add(new Vector3(_inner.x - 0.5f, y, _inner.z + 0.5f));
+   //         _meshData.vertices.Add(new Vector3(_inner.x + 0.5f, y, _inner.z - 0.5f));
+   //         _meshData.vertices.Add(new Vector3(_inner.x - 0.5f, y, _inner.z - 0.5f));
+   //     }
+   //     else if (Mathf.Abs(_direction.z) == 1.0f)
+   //     {
+   //         float z = _inner.z + _direction.z * 0.5f;
+   //         _meshData.vertices.Add(new Vector3(_inner.x + 0.5f, _inner.y + 0.5f, z));
+   //         _meshData.vertices.Add(new Vector3(_inner.x - 0.5f, _inner.y + 0.5f, z));
+   //         _meshData.vertices.Add(new Vector3(_inner.x + 0.5f, _inner.y - 0.5f, z));
+   //         _meshData.vertices.Add(new Vector3(_inner.x - 0.5f, _inner.y - 0.5f, z));
+   //     }
+   //
+   //     _meshData.normals.Add(_direction);
+   //     _meshData.normals.Add(_direction);
+   //     _meshData.normals.Add(_direction);
+   //     _meshData.normals.Add(_direction);
+   //
+   //     if (_direction.x - _direction.y + _direction.z > 0)
+   //     {
+   //         _meshData.triangles.Add(_verticesIndex);
+   //         _meshData.triangles.Add(_verticesIndex + 1);
+   //         _meshData.triangles.Add(_verticesIndex + 2);
+   //
+   //         _meshData.triangles.Add(_verticesIndex + 1);
+   //         _meshData.triangles.Add(_verticesIndex + 3);
+   //         _meshData.triangles.Add(_verticesIndex + 2);
+   //     }
+   //     else
+   //     {
+   //         _meshData.triangles.Add(_verticesIndex);
+   //         _meshData.triangles.Add(_verticesIndex + 2);
+   //         _meshData.triangles.Add(_verticesIndex + 1);
+   //
+   //         _meshData.triangles.Add(_verticesIndex + 3);
+   //         _meshData.triangles.Add(_verticesIndex + 1);
+   //         _meshData.triangles.Add(_verticesIndex + 2);
+   //     }
+   //
+   //     _verticesIndex += 4;
     }
 }
 

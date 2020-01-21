@@ -63,30 +63,29 @@ class ComputeShaderMeshGenerator : IMeshGenerator
         triCountBuffer.GetData(triCountArr);
         int triCount = triCountArr[0];
 
-        Triangle[] triangles = new Triangle[resultTriangles.count];
+        Triangle[] triData = new Triangle[resultTriangles.count];
 
-        resultTriangles.GetData(triangles);
+        Vector3[] vertices = new Vector3[triCount*3];
+        int[] triangles = new int[triCount*3];
 
-        ProcessTriangles(meshData, triangles, triCount);
+        resultTriangles.GetData(triData);
+        
+        for (int i = 0; i < triCount; i++)
+        {
+           int startPos = i * 3;
+           vertices[startPos] = triData[i].a;
+           vertices[startPos+1] = triData[i].b;
+           vertices[startPos+2] = triData[i].c;
 
-        meshData.CreateMesh();
+           triangles[startPos] = startPos ;
+           triangles[startPos+1] = startPos + 1;
+           triangles[startPos+2] = startPos + 2;
+        }
+
+        meshData.vertices = vertices;
+        meshData.triangles = triangles;
 
         _chunk.SetMeshData(meshData);
-    }
-
-    public void ProcessTriangles(MeshData _meshData, Triangle[] _triangles, int _triCount)
-    {
-
-        for (int i = 0; i < _triCount; i++)
-        {
-            _meshData.vertices.Add(_triangles[i].a);
-            _meshData.vertices.Add(_triangles[i].b);
-            _meshData.vertices.Add(_triangles[i].c);
-
-            _meshData.triangles.Add(i * 3);
-            _meshData.triangles.Add(i * 3 + 1);
-            _meshData.triangles.Add(i * 3 + 2);
-        }
     }
 
     public override void Dispose()
