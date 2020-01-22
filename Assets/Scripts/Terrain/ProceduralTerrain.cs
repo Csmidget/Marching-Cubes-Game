@@ -40,8 +40,6 @@ public class ProceduralTerrain : MonoBehaviour
     private TerrainSettings.TerrainInnerSettings settings;
 
     private Queue<TerrainChunk> outdatedChunks;
-    private Queue<TerrainChunk> chunksToGeneratePriority;
-    private Queue<TerrainChunk> chunksToGenerate;
 
     private static ProceduralTerrain instance = null;
 
@@ -125,8 +123,6 @@ public class ProceduralTerrain : MonoBehaviour
         settings = terrainSettings.Get();
         terrainChunkOffsets = InitializeChunkoffsets(settings.maxRenderDistance);
 
-        chunksToGenerate = new Queue<TerrainChunk>();
-        chunksToGeneratePriority = new Queue<TerrainChunk>();
         outdatedChunks = new Queue<TerrainChunk>();
 
         if (terrainData != null)
@@ -140,7 +136,7 @@ public class ProceduralTerrain : MonoBehaviour
 
         activeChunks = new List<TerrainChunk>();
 
-        noiseMap = new NoiseMap3D(settings.seed, settings.frequency);
+        noiseMap = new NoiseMap3D(settings.seed, settings.frequency,settings.offset);
         
         meshGenerator = MeshGeneratorFactory.Create(terrainSettings.renderType);
         meshGenerator.Init(settings);   
@@ -237,7 +233,7 @@ public class ProceduralTerrain : MonoBehaviour
             // Inefficient. Should be a much better way of doing this.
             // Checks if a chunk should now be generated with high priority (For chunks that do not yet have a mesh and are within minimum render distance)
             if (!chunk.HasMesh && _chunkOffset.sqrMagnitude <= _sqrMinRenderDistance)
-                chunksToGeneratePriority.Enqueue(chunk);
+               meshGenerator.EnqueueChunk(chunk, true);
 
             if (!chunk.IsActive)
             {
@@ -257,9 +253,9 @@ public class ProceduralTerrain : MonoBehaviour
 
                 // sqrmagnitude would be more efficient. Would need to store sqrMinRenderDistance aswell
                 if (_chunkOffset.sqrMagnitude <= _sqrMinRenderDistance)
-                    chunksToGeneratePriority.Enqueue(chunk);
+                    meshGenerator.EnqueueChunk(chunk, true);
                 else
-                    chunksToGenerate.Enqueue(chunk);
+                    meshGenerator.EnqueueChunk(chunk);
             }
 
             terrainData.Add(chunkPos, chunk);
@@ -269,22 +265,6 @@ public class ProceduralTerrain : MonoBehaviour
     #endregion
     //######################
     #region Chunk Generation
-    private void GenerateQueuedChunks()
-    {
-        // Force all high priority chunks to be generated
-        while (chunksToGeneratePriority.Count > 0)
-        {
-            TerrainChunk currentChunk = chunksToGeneratePriority.Dequeue();
-            GenerateChunk(currentChunk);
-        }
-
-        // Generate a single low priority chunk.
-        if (chunksToGenerate.Count > 0)
-        {
-            TerrainChunk currentChunk = chunksToGenerate.Dequeue();
-            GenerateChunk(currentChunk);
-        }
-    }
 
     /// <summary>
     /// Checks for any newly generated chunk meshes and applies them to their gameobjects. Can only be done on the main thread.
@@ -293,7 +273,7 @@ public class ProceduralTerrain : MonoBehaviour
     private void UpdateGeneratedChunks()
     {
 
-        GenerateQueuedChunks();
+        meshGenerator.Update();
 
         while(outdatedChunks.Count > 0)
         {
@@ -301,29 +281,6 @@ public class ProceduralTerrain : MonoBehaviour
             meshGenerator.GenerateChunkMesh(currentChunk);
             
         }
-    }
-
-    private TerrainChunk GenerateChunk(TerrainChunk _chunk)
-    {
-        if (_chunk.HasMesh)
-            return _chunk;
-
-        int i = 0;
-        for (int z = 0; z < _chunk.dims + 1; z++)
-        {
-            for (int y = 0; y < _chunk.dims + 1; y++)
-            {
-                for (int x = 0; x < _chunk.dims + 1; x++)
-                {
-                    _chunk.terrainMap[i] = noiseMap.Evaluate(new Vector3(x, y, z) + settings.offset + _chunk.rawPosition);
-                    i++;
-                }
-            }
-        }
-
-        meshGenerator.GenerateChunkMesh(_chunk);
-
-        return _chunk;
     }
 
     #endregion
@@ -358,15 +315,29 @@ public class ProceduralTerrain : MonoBehaviour
 
     private TerrainChunk CreateEmptyChunk(Vector3 _chunkPosition)
     {
-        return new TerrainChunk(_chunkPosition, settings.chunkDims, transform, chunkPrefab);
+        TerrainChunk chunk = new TerrainChunk(noiseMap, _chunkPosition, settings.chunkDims, transform, chunkPrefab);
+
+        int i = 0;
+        for (int z = 0; z < chunk.dims + 1; z++)
+        {
+            for (int y = 0; y < chunk.dims + 1; y++)
+            {
+                for (int x = 0; x < chunk.dims + 1; x++)
+                {
+                    chunk.terrainMap[i] = noiseMap.Evaluate(new Vector3(x, y, z) + chunk.rawPosition);
+                    i++;
+                }
+            }
+        }
+
+        return chunk;
     }
 
     private TerrainChunk CreateChunk(Vector3 _chunkPosition)
     {
         TerrainChunk chunk = CreateEmptyChunk(_chunkPosition);
 
-        GenerateChunk(chunk);
-
+        meshGenerator.GenerateChunkMesh(chunk);
 
         return chunk;
     }

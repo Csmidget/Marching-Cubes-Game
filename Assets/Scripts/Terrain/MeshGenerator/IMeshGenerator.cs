@@ -5,11 +5,32 @@ using UnityEngine;
 
 public abstract class IMeshGenerator
 {
-    private Queue<TerrainChunk> chunksToGeneratePriority;
-    private Queue<TerrainChunk> chunksToGenerate;
-
+    protected Queue<TerrainChunk> chunksToGeneratePriority;
+    protected Queue<TerrainChunk> chunksToGenerate;
 
     protected float clipValue;
+
+    public virtual void Update()
+    {
+        if (chunksToGeneratePriority.Count > 0)
+        {
+            TerrainChunk currentChunk = chunksToGeneratePriority.Dequeue();
+            GenerateChunkMesh(currentChunk);
+        }
+        else if (chunksToGenerate.Count > 0)
+        {
+            TerrainChunk currentChunk = chunksToGenerate.Dequeue();
+            GenerateChunkMesh(currentChunk);
+        }
+    }
+
+    public virtual void EnqueueChunk(TerrainChunk _chunk, bool _highPriority = false)
+    {
+        if (_highPriority)
+            chunksToGeneratePriority.Enqueue(_chunk);
+        else
+            chunksToGenerate.Enqueue(_chunk);
+    }
     
     public abstract void GenerateChunkMesh(in TerrainChunk _chunkData);
     public virtual void Init(TerrainSettings.TerrainInnerSettings _settings) 

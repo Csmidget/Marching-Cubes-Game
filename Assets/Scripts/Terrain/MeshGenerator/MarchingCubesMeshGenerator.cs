@@ -8,6 +8,9 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
 {
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
     {
+        if (!_chunk.MeshOutdated)
+            return;
+
         MeshData meshData = new MeshData(false);
         int verticesIndex = 0;
 

@@ -17,6 +17,9 @@ public class MCubesParallelJobMeshGenerator : IMeshGenerator
 
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
     {
+        if (!_chunk.MeshOutdated)
+            return;
+
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
         MeshData meshData = new MeshData(false);

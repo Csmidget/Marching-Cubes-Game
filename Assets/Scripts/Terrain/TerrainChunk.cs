@@ -23,13 +23,13 @@ public class TerrainChunk
     MeshCollider meshCollider;
 
 
-    public TerrainChunk(Vector3 _position, int _dims, Transform _parent, GameObject _chunkPrefab)
+    public TerrainChunk(NoiseMap3D _noiseMap, Vector3 _position, int _dims, Transform _parent, GameObject _chunkPrefab)
     {
         position = _position;
         dims = _dims;
         rawDims = dims + 1;
         meshData = null;
-        
+        MeshOutdated = true;
         terrainMap = new float[rawDims * rawDims * rawDims];
 
         rawPosition = new Vector3(position.x * dims, position.y * dims, position.z * dims);
@@ -40,7 +40,6 @@ public class TerrainChunk
         meshFilter = chunkObject.GetComponent<MeshFilter>();
         meshCollider = chunkObject.GetComponent<MeshCollider>();
     }
-
 
     /// <summary>
     /// NON RANGE CHECKED get from terrainMap. Less efficient than direct access.

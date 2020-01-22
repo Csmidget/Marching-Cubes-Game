@@ -22,6 +22,7 @@ class ComputeShaderMeshGenerator : IMeshGenerator
     ComputeBuffer triCountBuffer;
     TerrainSettings.ComputeShaderTerrainSettings settings;
 
+
     public override void Init(TerrainSettings.TerrainInnerSettings _settings)
     {
         base.Init(_settings);

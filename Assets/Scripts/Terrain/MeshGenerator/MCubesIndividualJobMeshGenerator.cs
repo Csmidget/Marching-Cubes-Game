@@ -10,8 +10,85 @@ using UnityEngine;
 
 public class MCubesIndividualJobMeshGenerator : IMeshGenerator
 {
+    struct JobData
+    {
+        public JobHandle handle;
+        public GenMesh job;
+        public TerrainChunk chunk;
+    }
+
+    List<JobData> activeJobs;
+
+    public override void Update()
+    {
+        for (int i = activeJobs.Count - 1; i >= 0 ; i--)
+        {
+            if (activeJobs[i].handle.IsCompleted)
+            {
+                CompleteGenMeshJob(activeJobs[i]);
+                activeJobs.RemoveAt(i);
+            }
+        }
+
+        while (activeJobs.Count < 8)
+        {
+            if (chunksToGeneratePriority.Count > 0)
+            {
+                activeJobs.Add(StartGenMeshJob(chunksToGeneratePriority.Dequeue()));
+                continue;
+            }
+            else if (chunksToGenerate.Count > 0)
+            {
+                activeJobs.Add(StartGenMeshJob(chunksToGenerate.Dequeue()));
+                continue;
+            }
+
+            break;
+        }
+    }
+
+    private JobData StartGenMeshJob(TerrainChunk _chunk)
+    {
+        JobData data;
+
+        data.chunk = _chunk;
+
+        data.job = new GenMesh(_chunk.dims, clipValue, _chunk.RawSize());
+        data.job.terrainMap.CopyFrom(_chunk.terrainMap);
+
+        data.handle = data.job.Schedule();
+
+        return data;
+    }
+
+    private void CompleteGenMeshJob(JobData _jobData)
+    {
+        _jobData.handle.Complete();
+
+        MeshData meshData = new MeshData(false);
+
+        meshData.vertices = _jobData.job.vertices.ToArray();
+        meshData.normals = _jobData.job.normals.ToArray();
+        meshData.triangles = _jobData.job.triangles.ToArray();
+
+        _jobData.job.Dispose();
+
+        _jobData.chunk.SetMeshData(meshData);
+        _jobData.chunk.ApplyMesh();
+    }
+
+    public override void Init(TerrainSettings.TerrainInnerSettings _settings)
+    {
+        base.Init(_settings);
+        activeJobs = new List<JobData>(8);
+    }
+
+
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
     {
+        if (!_chunk.MeshOutdated)
+            return;
+
         MeshData meshData = new MeshData(false);
 
         var job = new GenMesh(_chunk.dims, clipValue, _chunk.RawSize());
