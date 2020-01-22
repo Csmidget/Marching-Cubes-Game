@@ -60,9 +60,8 @@ public class MCubesParallelJobMeshGenerator : IMeshGenerator
 
         job.Dispose();
 
-
-
         _chunk.SetMeshData(meshData);
+        _chunk.ApplyMesh();
     }
 
     struct Triangle

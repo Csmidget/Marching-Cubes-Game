@@ -77,6 +77,7 @@ public class MarchingCubesMeshGenerator : IMeshGenerator
         meshData.normals = normals.ToArray();
 
         _chunk.SetMeshData(meshData);
+        _chunk.ApplyMesh();
     }
 
     private Vector3 InterpBetweenTerrainPoints(in TerrainChunk _chunk, Vector3 _p1, Vector3 _p2)

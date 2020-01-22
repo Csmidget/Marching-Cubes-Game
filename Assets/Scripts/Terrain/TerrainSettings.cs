@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum RenderType { Voxel_LEGACY, MarchingCubes, ComputeShader, MarchingCubesParallelJob, MarchingCubeIndividualJob }
+public enum RenderType {MarchingCubes, ComputeShader, MarchingCubesParallelJob, MarchingCubeIndividualJob }
 
 [System.Serializable]
 public class TerrainSettings 
@@ -11,34 +11,29 @@ public class TerrainSettings
 
     [SerializeField]
     [ConditionalHide("renderType", 0)]
-    private TerrainInnerSettings voxelTerrainSettings;
-    [SerializeField]
-    [ConditionalHide("renderType", 1)]
     private TerrainInnerSettings marchingCubesTerrainSettings;
     [SerializeField]
-    [ConditionalHide("renderType", 2)]
+    [ConditionalHide("renderType", 1)]
     private ComputeShaderTerrainSettings computeShaderTerrainSettings;
     [SerializeField]
-    [ConditionalHide("renderType", 3)]
+    [ConditionalHide("renderType", 2)]
     private TerrainInnerSettings mCubesParallelJobTerrainSettings;
     [SerializeField]
-    [ConditionalHide("renderType", 4)]
+    [ConditionalHide("renderType", 3)]
     private TerrainInnerSettings mCubesIndividualJobTerrainSettings;
 
     public TerrainInnerSettings Get()
     {
         switch (renderType)
         {
-            case RenderType.Voxel_LEGACY:
-                return voxelTerrainSettings;
             case RenderType.MarchingCubes:
                 return marchingCubesTerrainSettings;
             case RenderType.ComputeShader:
                 return computeShaderTerrainSettings;
             case RenderType.MarchingCubesParallelJob:
-                return marchingCubesTerrainSettings;
+                return mCubesParallelJobTerrainSettings;
             case RenderType.MarchingCubeIndividualJob:
-                return marchingCubesTerrainSettings;
+                return mCubesIndividualJobTerrainSettings;
         }
 
         throw new System.Exception("Error: Unable to generate settings for type: " + renderType);
@@ -47,8 +42,6 @@ public class TerrainSettings
     [System.Serializable]
     public class TerrainInnerSettings
     {
-        public bool multiThreaded = true;
-
         //In settings so it can be passed to mesh generators.
         public readonly int chunkDims = 16;
         public readonly int halfDims = 8;

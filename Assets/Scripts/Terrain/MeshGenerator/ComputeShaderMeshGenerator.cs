@@ -26,9 +26,6 @@ class ComputeShaderMeshGenerator : IMeshGenerator
     {
         base.Init(_settings);
 
-        //Cannot multithread compute shader calls.
-        supportsMultiThreading = false;
-
         settings = (TerrainSettings.ComputeShaderTerrainSettings)_settings;
 
         shader = settings.shader;
@@ -86,6 +83,7 @@ class ComputeShaderMeshGenerator : IMeshGenerator
         meshData.triangles = triangles;
 
         _chunk.SetMeshData(meshData);
+        _chunk.ApplyMesh();
     }
 
     public override void Dispose()

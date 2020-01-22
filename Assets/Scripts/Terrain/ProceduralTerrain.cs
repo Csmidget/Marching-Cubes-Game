@@ -39,12 +39,9 @@ public class ProceduralTerrain : MonoBehaviour
     List<Vector3> terrainChunkOffsets;
     private TerrainSettings.TerrainInnerSettings settings;
 
-    // Multithreading
-    Thread generateChunksThread;
     private Queue<TerrainChunk> outdatedChunks;
     private Queue<TerrainChunk> chunksToGeneratePriority;
     private Queue<TerrainChunk> chunksToGenerate;
-    private Queue<TerrainChunk> generatedChunks;
 
     private static ProceduralTerrain instance = null;
 
@@ -121,16 +118,6 @@ public class ProceduralTerrain : MonoBehaviour
 
     #endregion
     //######################
-    #region Multithreading
-
-    public void GenerateChunksThread()
-    {
-        while (settings.multiThreaded)
-            GenerateQueuedChunks();
-    }
-
-    #endregion
-    //######################
     #region Initialization
 
     private void Init()
@@ -138,7 +125,6 @@ public class ProceduralTerrain : MonoBehaviour
         settings = terrainSettings.Get();
         terrainChunkOffsets = InitializeChunkoffsets(settings.maxRenderDistance);
 
-        generatedChunks = new Queue<TerrainChunk>();
         chunksToGenerate = new Queue<TerrainChunk>();
         chunksToGeneratePriority = new Queue<TerrainChunk>();
         outdatedChunks = new Queue<TerrainChunk>();
@@ -157,14 +143,7 @@ public class ProceduralTerrain : MonoBehaviour
         noiseMap = new NoiseMap3D(settings.seed, settings.frequency);
         
         meshGenerator = MeshGeneratorFactory.Create(terrainSettings.renderType);
-        meshGenerator.Init(settings);
-
-        if (settings.multiThreaded && meshGenerator.SupportsMultiThreading)
-        {
-            ThreadStart threadStart = new ThreadStart(GenerateChunksThread);
-            generateChunksThread = new Thread(threadStart);
-            generateChunksThread.Start();
-        }            
+        meshGenerator.Init(settings);   
     }
 
     public void GenerateMap()
@@ -297,7 +276,6 @@ public class ProceduralTerrain : MonoBehaviour
         {
             TerrainChunk currentChunk = chunksToGeneratePriority.Dequeue();
             GenerateChunk(currentChunk);
-            generatedChunks.Enqueue(currentChunk);
         }
 
         // Generate a single low priority chunk.
@@ -305,7 +283,6 @@ public class ProceduralTerrain : MonoBehaviour
         {
             TerrainChunk currentChunk = chunksToGenerate.Dequeue();
             GenerateChunk(currentChunk);
-            generatedChunks.Enqueue(currentChunk);
         }
     }
 
@@ -316,28 +293,13 @@ public class ProceduralTerrain : MonoBehaviour
     private void UpdateGeneratedChunks()
     {
 
-        if (settings.multiThreaded && meshGenerator.SupportsMultiThreading)
-        {
-            if (!generateChunksThread.IsAlive)
-                generateChunksThread.Start();
-        }
-        else
-            GenerateQueuedChunks();
+        GenerateQueuedChunks();
 
         while(outdatedChunks.Count > 0)
         {
             TerrainChunk currentChunk = outdatedChunks.Dequeue();
             meshGenerator.GenerateChunkMesh(currentChunk);
-            currentChunk.ApplyMesh();
-        }
-
-        // Assign newly generated terrain meshes to their chunk game objects.
-        while (generatedChunks.Count > 0)
-        {
-            TerrainChunk chunk = generatedChunks.Dequeue();
-
-            if (chunk != null)
-                chunk.ApplyMesh();
+            
         }
     }
 
@@ -405,7 +367,6 @@ public class ProceduralTerrain : MonoBehaviour
 
         GenerateChunk(chunk);
 
-        chunk.ApplyMesh();
 
         return chunk;
     }

@@ -439,17 +439,8 @@ MonoBehaviour:
   chunkPrefab: {fileID: 4622274691877607373, guid: 2826151d2840a25428bb8b20c42ce3d9,
     type: 3}
   terrainSettings:
-    renderType: 4
-    voxelTerrainSettings:
-      multiThreaded: 1
-      seed: 0
-      frequency: 0
-      clipPercent: 0
-      offset: {x: 0, y: 0, z: 0}
-      minRenderDistance: 1
-      maxRenderDistance: 6
+    renderType: 3
     marchingCubesTerrainSettings:
-      multiThreaded: 1
       seed: 0
       frequency: 0.0323
       clipPercent: 0.3
@@ -457,7 +448,6 @@ MonoBehaviour:
       minRenderDistance: 6
       maxRenderDistance: 10
     computeShaderTerrainSettings:
-      multiThreaded: 1
       seed: 0
       frequency: 0.0323
       clipPercent: 0.3
@@ -466,7 +456,6 @@ MonoBehaviour:
       maxRenderDistance: 10
       shader: {fileID: 7200000, guid: 0d9a9760f92783640bb1daaaee812bcb, type: 3}
     mCubesParallelJobTerrainSettings:
-      multiThreaded: 1
       seed: 0
       frequency: 0.0323
       clipPercent: 0.3
@@ -474,7 +463,6 @@ MonoBehaviour:
       minRenderDistance: 6
       maxRenderDistance: 10
     mCubesIndividualJobTerrainSettings:
-      multiThreaded: 1
       seed: 0
       frequency: 0.0323
       clipPercent: 0.3

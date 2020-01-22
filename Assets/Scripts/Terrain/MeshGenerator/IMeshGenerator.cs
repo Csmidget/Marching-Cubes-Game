@@ -5,22 +5,18 @@ using UnityEngine;
 
 public abstract class IMeshGenerator
 {
+    private Queue<TerrainChunk> chunksToGeneratePriority;
+    private Queue<TerrainChunk> chunksToGenerate;
+
+
     protected float clipValue;
-    protected bool supportsMultiThreading;
-
-    public bool SupportsMultiThreading
-    {
-        get
-        {
-            return supportsMultiThreading;
-        }
-    }
-
+    
     public abstract void GenerateChunkMesh(in TerrainChunk _chunkData);
     public virtual void Init(TerrainSettings.TerrainInnerSettings _settings) 
     { 
         clipValue = _settings.clipPercent;
-        supportsMultiThreading = true;
+        chunksToGeneratePriority = new Queue<TerrainChunk>();
+        chunksToGenerate = new Queue<TerrainChunk>();
     }
 
     public virtual void Dispose() {; }
@@ -32,8 +28,6 @@ public static class MeshGeneratorFactory
     {
         switch (_renderType)
         {
-            case RenderType.Voxel_LEGACY:
-                return new VoxelMeshGenerator();
             case RenderType.MarchingCubes:
                 return new MarchingCubesMeshGenerator();
             case RenderType.ComputeShader:

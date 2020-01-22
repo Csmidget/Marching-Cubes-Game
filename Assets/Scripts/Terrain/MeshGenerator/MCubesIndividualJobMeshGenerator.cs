@@ -27,6 +27,7 @@ public class MCubesIndividualJobMeshGenerator : IMeshGenerator
         job.Dispose();
 
         _chunk.SetMeshData(meshData);
+        _chunk.ApplyMesh();
     }
 
     [BurstCompile]
