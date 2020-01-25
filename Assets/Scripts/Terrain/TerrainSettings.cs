@@ -61,7 +61,7 @@ public class TerrainSettings
 
         [Range(0, 6)]
         public int minRenderDistance = 1; //How many chunks away from the players current chunk will be forced to render.
-        [Range(6, 10)]
+        [Range(1, 10)]
         public int maxRenderDistance = 6; //
 
     }

@@ -20,6 +20,8 @@ From Stefan Gustavson, Linkping University, Sweden (stegu at itn dot liu dot se)
 From Karsten Schmidt (slight optimizations & restructuring)
 
 Some changes by Sebastian Lague for use in a tutorial series.
+
+Further modified by Charles Smith to support the unity jobs system.
 */
 
 /*
@@ -30,8 +32,12 @@ Some changes by Sebastian Lague for use in a tutorial series.
  * -1.0 to +1.0, but there are no guarantees that all output values will exist within that range.
 */
 
+
 using System;
-public class Noise
+using Unity.Collections;
+using Unity.Mathematics;
+
+public struct Noise
 {
     #region Values
     /// Initial permutation table
@@ -53,7 +59,7 @@ public class Noise
     const int RandomSize = 256;
     const double Sqrt3 = 1.7320508075688772935;
     const double Sqrt5 = 2.2360679774997896964;
-    int[] _random;
+    NativeArray<int> _random;
 
     /// Skewing and unskewing factors for 2D, 3D and 4D, 
     /// some of them pre-multiplied.
@@ -75,25 +81,31 @@ public class Noise
     /// Gradient vectors for 3D (pointing to mid points of all edges of a unit
     /// cube)
     /// </summary>
-    static readonly int[][] Grad3 =
+    [ReadOnly]
+    static readonly int3[] Grad3 =
     {
-        new[] {1, 1, 0}, new[] {-1, 1, 0}, new[] {1, -1, 0},
-        new[] {-1, -1, 0}, new[] {1, 0, 1}, new[] {-1, 0, 1},
-        new[] {1, 0, -1}, new[] {-1, 0, -1}, new[] {0, 1, 1},
-        new[] {0, -1, 1}, new[] {0, 1, -1}, new[] {0, -1, -1}
+        new int3(1, 1, 0),   new int3(-1, 1, 0),  new int3(1, -1, 0),
+        new int3(-1, -1, 0), new int3(1, 0, 1),   new int3(-1, 0, 1),
+        new int3(1, 0, -1),  new int3(-1, 0, -1), new int3(0, 1, 1),
+        new int3(0, -1, 1),  new int3(0, 1, -1),  new int3(0, -1, -1)
     };
     #endregion
 
-    public Noise()
-    {
-        Randomize(0);
-    }
+    //public Noise()
+    //{
+    //    Randomize(0);
+    //}
 
-    public Noise(int seed)
+    public Noise(int seed = 0)
     {
+        _random = new NativeArray<int>(RandomSize * 2, Allocator.Persistent); //new int[RandomSize * 2];
         Randomize(seed);
     }
 
+    public void Dispose()
+    {
+        _random.Dispose();
+    }
 
     /// <summary>
     /// Generates value, typically in range [-1, 1]
@@ -264,8 +276,6 @@ public class Noise
 
     void Randomize(int seed)
     {
-        _random = new int[RandomSize * 2];
-
         if (seed != 0)
         {
             // Shuffle the array using the given seed
@@ -292,19 +302,19 @@ public class Noise
         }
     }
 
-    static double Dot(int[] g, double x, double y, double z, double t)
+    static double Dot(int4 g, double x, double y, double z, double t)
     {
-        return g[0] * x + g[1] * y + g[2] * z + g[3] * t;
+        return g.x * x + g.y * y + g.z * z + g.w * t;
     }
 
-    static double Dot(int[] g, double x, double y, double z)
+    static double Dot(int3 g, double x, double y, double z)
     {
-        return g[0] * x + g[1] * y + g[2] * z;
+        return g.x * x + g.y * y + g.z * z;
     }
 
-    static double Dot(int[] g, double x, double y)
+    static double Dot(int2 g, double x, double y)
     {
-        return g[0] * x + g[1] * y;
+        return g.x * x + g.y * y;
     }
 
     static int FastFloor(double x)

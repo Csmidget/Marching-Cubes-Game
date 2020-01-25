@@ -137,7 +137,7 @@ public class ProceduralTerrain : MonoBehaviour
         activeChunks = new List<TerrainChunk>();
 
         noiseMap = new NoiseMap3D(settings.seed, settings.frequency,settings.offset);
-        
+
         meshGenerator = MeshGeneratorFactory.Create(terrainSettings.renderType);
         meshGenerator.Init(settings);   
     }
@@ -179,9 +179,9 @@ public class ProceduralTerrain : MonoBehaviour
 
     private void UpdateVisibleChunks()
     {
-        Stopwatch stopwatch = new Stopwatch();
+    //    Stopwatch stopwatch = new Stopwatch();
 
-        stopwatch.Start();
+    //    stopwatch.Start();
 
         Vector3 viewerChunkPos = GetViewerChunk();
 
@@ -204,9 +204,9 @@ public class ProceduralTerrain : MonoBehaviour
 
         previousViewerChunk = viewerChunkPos;
 
-        stopwatch.Stop();
+    //    stopwatch.Stop();
 
-        Debug.Log(stopwatch.ElapsedMilliseconds);
+    //    Debug.Log(stopwatch.ElapsedMilliseconds);
 
     }
 
@@ -317,18 +317,7 @@ public class ProceduralTerrain : MonoBehaviour
     {
         TerrainChunk chunk = new TerrainChunk(noiseMap, _chunkPosition, settings.chunkDims, transform, chunkPrefab);
 
-        int i = 0;
-        for (int z = 0; z < chunk.dims + 1; z++)
-        {
-            for (int y = 0; y < chunk.dims + 1; y++)
-            {
-                for (int x = 0; x < chunk.dims + 1; x++)
-                {
-                    chunk.terrainMap[i] = noiseMap.Evaluate(new Vector3(x, y, z) + chunk.rawPosition);
-                    i++;
-                }
-            }
-        }
+        chunk.terrainMap = noiseMap.EvaluateChunk(chunk.rawPosition, chunk.dims + 1);
 
         return chunk;
     }
