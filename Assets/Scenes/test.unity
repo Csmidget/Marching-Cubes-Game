@@ -405,11 +405,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6160ff97e9f090e488dca5a70008c172, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  autoUpdate: 0
   viewer: {fileID: 1796052648}
   chunkPrefab: {fileID: 4622274691877607373, guid: 2826151d2840a25428bb8b20c42ce3d9,
     type: 3}
-  terrainSettings:
+  settings:
+    autoUpdate: 0
     renderType: 2
     basicTerrainSettings:
       seed: 0
@@ -426,8 +426,8 @@ MonoBehaviour:
       offset: {x: 0, y: 0, z: 0}
       minRenderDistance: 6
       maxRenderDistance: 10
-      chunksPerFrame: 8
-      shader: {fileID: 7200000, guid: 0d9a9760f92783640bb1daaaee812bcb, type: 3}
+      chunksPerFrame: 1
+      shader: {fileID: 0}
     jobSystemFullSettings:
       seed: 0
       frequency: 0.0323
@@ -435,7 +435,7 @@ MonoBehaviour:
       offset: {x: 0, y: 0, z: 0}
       minRenderDistance: 6
       maxRenderDistance: 10
-      chunksPerFrame: 8
+      chunksPerFrame: 10
     jobSystemPartialSettings:
       seed: 0
       frequency: 0.0323
@@ -443,7 +443,7 @@ MonoBehaviour:
       offset: {x: 0, y: 0, z: 0}
       minRenderDistance: 6
       maxRenderDistance: 10
-      chunksPerFrame: 8
+      chunksPerFrame: 1
 --- !u!4 &1973795516
 Transform:
   m_ObjectHideFlags: 0

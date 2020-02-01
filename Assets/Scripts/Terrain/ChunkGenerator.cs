@@ -18,7 +18,7 @@ public class ChunkGenerator
     private int chunksPerFrame;
 
 
-    public ChunkGenerator(EditorTerrainSettings _typeSettings)
+    public ChunkGenerator(ProceduralTerrainSettings _typeSettings)
     {
         var settings = _typeSettings.Get();
 

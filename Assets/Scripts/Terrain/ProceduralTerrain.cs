@@ -9,13 +9,10 @@ public class ProceduralTerrain : MonoBehaviour
 {
     //######################
     #region Public Variables
-
-    public bool autoUpdate = true;
-
     public Transform viewer;
     public GameObject chunkPrefab;
 
-    public EditorTerrainSettings terrainSettings;
+    public ProceduralTerrainSettings settings;
 
     #endregion
     //######################
@@ -30,10 +27,10 @@ public class ProceduralTerrain : MonoBehaviour
     //Offsets representing every chunk that is within the max render distance.
     List<Vector3> renderDistanceChunkOffsets;
 
-    private TerrainSettings settings;
+    private TerrainSettings terrainSettings;
 
     // The chunk the viewer was in last update.
-    Vector3 previousViewerChunk;
+    private Vector3 previousViewerChunk;
 
     #endregion
     //######################
@@ -43,7 +40,7 @@ public class ProceduralTerrain : MonoBehaviour
     {
         Vector3 nearestPoint = new Vector3(Mathf.Round(_point.x), Mathf.Round(_point.y), Mathf.Round(_point.z));
         Vector3 chunkPos = ChunkAtPoint(nearestPoint);
-        int dims = settings.chunkDims;
+        int dims = terrainSettings.chunkDims;
 
         //Get the real modulo value for each point (plain % operator can return negative numbers. We only want 0 - chunkDims.)
         //This tells us which point in the chunk we have to modify.
@@ -104,7 +101,7 @@ public class ProceduralTerrain : MonoBehaviour
 
     public void Init()
     {
-        settings = terrainSettings.Get();
+        terrainSettings = settings.Get();
         renderDistanceChunkOffsets = GetChunkOffsets();
 
         if (terrainData != null)
@@ -118,7 +115,7 @@ public class ProceduralTerrain : MonoBehaviour
 
         activeChunks = new List<TerrainChunk>();
 
-        chunkGenerator = new ChunkGenerator(terrainSettings);
+        chunkGenerator = new ChunkGenerator(settings);
 
         RenderVisibleChunks(ViewerChunk());
         chunkGenerator.GenerateChunksImmediately();
@@ -129,8 +126,8 @@ public class ProceduralTerrain : MonoBehaviour
     //Pre-generating and ordering the offsets of these chunks allows for performant execution of this.
     private List<Vector3> GetChunkOffsets()
     {
-        int renderDistance = settings.maxRenderDistance;
-        float sqrRenderDistance = settings.maxRenderDistance * settings.maxRenderDistance;
+        int renderDistance = terrainSettings.maxRenderDistance;
+        float sqrRenderDistance = terrainSettings.maxRenderDistance * terrainSettings.maxRenderDistance;
 
         List<Vector3> offsetList = new List<Vector3>();
 
@@ -162,7 +159,7 @@ public class ProceduralTerrain : MonoBehaviour
         if (viewerChunkPos == previousViewerChunk)
             return;
 
-        float sqrRenderDistance = settings.maxRenderDistance * settings.maxRenderDistance;
+        float sqrRenderDistance = terrainSettings.maxRenderDistance * terrainSettings.maxRenderDistance;
 
         //Clear any chunks that are no longer within render distance (They remain cached but are disabled)
         for (int i = activeChunks.Count - 1; i >= 0; i--)
@@ -184,7 +181,7 @@ public class ProceduralTerrain : MonoBehaviour
 
     private void RenderVisibleChunks(in Vector3 _viewerChunk)
     {
-        float sqrMinRenderDistance = settings.minRenderDistance * settings.minRenderDistance;
+        float sqrMinRenderDistance = terrainSettings.minRenderDistance * terrainSettings.minRenderDistance;
 
         for (int i = 0; i < renderDistanceChunkOffsets.Count; i++)
             RenderChunk(_viewerChunk, renderDistanceChunkOffsets[i], sqrMinRenderDistance);
@@ -237,12 +234,12 @@ public class ProceduralTerrain : MonoBehaviour
     {
         //Ensure we are rounding up from 0.5
         float roundup = 0.001f;
-        return new Vector3(Mathf.Round((_point.x - settings.halfDims + roundup) / settings.chunkDims), Mathf.Round((_point.y - settings.halfDims + roundup) / settings.chunkDims), Mathf.Round((_point.z - settings.halfDims + roundup) / settings.chunkDims));
+        return new Vector3(Mathf.Round((_point.x - terrainSettings.halfDims + roundup) / terrainSettings.chunkDims), Mathf.Round((_point.y - terrainSettings.halfDims + roundup) / terrainSettings.chunkDims), Mathf.Round((_point.z - terrainSettings.halfDims + roundup) / terrainSettings.chunkDims));
     }
 
     private TerrainChunk CreateChunk(in Vector3 _chunkPosition, in bool _highPriority = false)
     {
-        TerrainChunk chunk = new TerrainChunk(_chunkPosition, settings.chunkDims, transform, chunkPrefab);
+        TerrainChunk chunk = new TerrainChunk(_chunkPosition, terrainSettings.chunkDims, transform, chunkPrefab);
 
         terrainData.Add(_chunkPosition, chunk);
 

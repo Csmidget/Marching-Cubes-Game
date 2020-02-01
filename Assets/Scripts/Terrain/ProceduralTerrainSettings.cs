@@ -5,8 +5,10 @@ using UnityEngine;
 public enum RenderType {Basic, ComputeShader, JobSystemFull, JobSystemPartial }
 
 [System.Serializable]
-public class EditorTerrainSettings 
+public class ProceduralTerrainSettings 
 {
+    public bool autoUpdate = false;
+
     public RenderType renderType;
 
     [SerializeField]
@@ -66,7 +68,7 @@ public class TerrainSettings
     public int maxRenderDistance = 6; //
 
     [Range(1, 10)]
-    public int chunksPerFrame;
+    public int chunksPerFrame = 1;
 
 }
 

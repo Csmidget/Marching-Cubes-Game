@@ -11,9 +11,13 @@ public class TerrainGenEditor : Editor
     {
         ProceduralTerrain terrainGen = (ProceduralTerrain)target;
 
+        var settings = terrainGen.settings.Get();
+        if (settings.maxRenderDistance < settings.minRenderDistance)
+            settings.maxRenderDistance = settings.minRenderDistance;
+
         if (DrawDefaultInspector())
         {
-            if (terrainGen.autoUpdate)
+            if (terrainGen.settings.autoUpdate)
             {
                 terrainGen.Clear();
                 terrainGen.Init();

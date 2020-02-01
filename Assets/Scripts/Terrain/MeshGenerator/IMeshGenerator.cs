@@ -56,7 +56,7 @@ public abstract class IMeshGenerator
 
 public static class MeshGeneratorFactory
 {
-    public static IMeshGenerator Create(EditorTerrainSettings _typeSettings)
+    public static IMeshGenerator Create(ProceduralTerrainSettings _typeSettings)
     {
 
         TerrainSettings settings = _typeSettings.Get();
