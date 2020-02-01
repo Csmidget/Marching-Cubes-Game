@@ -6,9 +6,12 @@ using UnityEngine;
 
 public class MarchingCubesMeshGenerator : IMeshGenerator
 {
+
+    public MarchingCubesMeshGenerator(float _clipPercent) : base(_clipPercent) {; }
+
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
     {
-        if (!_chunk.MeshOutdated)
+        if (!_chunk.meshOutdated)
             return;
 
         MeshData meshData = new MeshData(false);

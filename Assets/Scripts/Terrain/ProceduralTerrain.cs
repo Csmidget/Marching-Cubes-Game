@@ -29,18 +29,14 @@ public class ProceduralTerrain : MonoBehaviour
     //######################
     #region Private Variables
 
-    private NoiseMap3D noiseMap;
+    private ChunkGenerator chunkGenerator;
 
-    private IMeshGenerator meshGenerator;
-    
     // Terrain variables
     private Dictionary<Vector3, TerrainChunk> terrainData;
     private List<TerrainChunk> activeChunks;
     List<Vector3> terrainChunkOffsets;
     private TerrainSettings.TerrainInnerSettings settings;
-
-    private Queue<TerrainChunk> outdatedChunks;
-
+    
     private static ProceduralTerrain instance = null;
 
     // The chunk the viewer was in last update.
@@ -122,9 +118,7 @@ public class ProceduralTerrain : MonoBehaviour
     {
         settings = terrainSettings.Get();
         terrainChunkOffsets = InitializeChunkoffsets(settings.maxRenderDistance);
-
-        outdatedChunks = new Queue<TerrainChunk>();
-
+        
         if (terrainData != null)
         {
             foreach (var chunk in terrainData.Values)
@@ -136,10 +130,7 @@ public class ProceduralTerrain : MonoBehaviour
 
         activeChunks = new List<TerrainChunk>();
 
-        noiseMap = new NoiseMap3D(settings.seed, settings.frequency,settings.offset);
-
-        meshGenerator = MeshGeneratorFactory.Create(terrainSettings.renderType);
-        meshGenerator.Init(settings);   
+        chunkGenerator = new ChunkGenerator(terrainSettings);
     }
 
     public void GenerateMap()
@@ -178,22 +169,21 @@ public class ProceduralTerrain : MonoBehaviour
     #region Chunk Rendering
 
     private void UpdateVisibleChunks()
-    {
-    //    Stopwatch stopwatch = new Stopwatch();
-
-    //    stopwatch.Start();
-
+    {      
         Vector3 viewerChunkPos = GetViewerChunk();
 
         if (viewerChunkPos == previousViewerChunk)
             return;
-       
+
         float sqrRenderDistance = settings.maxRenderDistance * settings.maxRenderDistance;
 
         //Clear any chunks that are no longer within render distance (They remain cached but are disabled)
-        for (int i = 0; i < activeChunks.Count; i++)
+        for (int i = activeChunks.Count - 1; i >= 0; i--)
         {
-            if ((viewerChunkPos - activeChunks[i].position).sqrMagnitude > sqrRenderDistance)
+            var chunk = activeChunks[i];
+            var pos = chunk.position;
+
+            if ((viewerChunkPos - pos).sqrMagnitude > sqrRenderDistance)
             {
                 activeChunks[i].SetActive(false);
                 activeChunks.RemoveAt(i);
@@ -203,11 +193,6 @@ public class ProceduralTerrain : MonoBehaviour
         RenderVisibleChunks(viewerChunkPos, false);
 
         previousViewerChunk = viewerChunkPos;
-
-    //    stopwatch.Stop();
-
-    //    Debug.Log(stopwatch.ElapsedMilliseconds);
-
     }
 
     private void RenderVisibleChunks(in Vector3 _viewerChunk, in bool _generateImmediately)
@@ -233,7 +218,7 @@ public class ProceduralTerrain : MonoBehaviour
             // Inefficient. Should be a much better way of doing this.
             // Checks if a chunk should now be generated with high priority (For chunks that do not yet have a mesh and are within minimum render distance)
             if (!chunk.HasMesh && _chunkOffset.sqrMagnitude <= _sqrMinRenderDistance)
-               meshGenerator.EnqueueChunk(chunk, true);
+               chunkGenerator.EnqueueChunk(chunk, true);
 
             if (!chunk.IsActive)
             {
@@ -249,16 +234,13 @@ public class ProceduralTerrain : MonoBehaviour
             }
             else
             {
-                chunk = CreateEmptyChunk(chunkPos);
-
                 // sqrmagnitude would be more efficient. Would need to store sqrMinRenderDistance aswell
                 if (_chunkOffset.sqrMagnitude <= _sqrMinRenderDistance)
-                    meshGenerator.EnqueueChunk(chunk, true);
+                    CreateEmptyChunk(chunkPos, true);
                 else
-                    meshGenerator.EnqueueChunk(chunk);
+                    CreateEmptyChunk(chunkPos);
             }
-
-            terrainData.Add(chunkPos, chunk);
+       
             activeChunks.Add(terrainData[chunkPos]);
         }
     }
@@ -273,14 +255,7 @@ public class ProceduralTerrain : MonoBehaviour
     private void UpdateGeneratedChunks()
     {
 
-        meshGenerator.Update();
-
-        while(outdatedChunks.Count > 0)
-        {
-            TerrainChunk currentChunk = outdatedChunks.Dequeue();
-            meshGenerator.GenerateChunkMesh(currentChunk);
-            
-        }
+        chunkGenerator.Update();
     }
 
     #endregion
@@ -302,8 +277,8 @@ public class ProceduralTerrain : MonoBehaviour
     private void ModifyPointInChunk(in Vector3 _chunkPos, in int _posInChunkX, in int _posInChunkY, in int _posInChunkZ, in float _changeAmount)
     {
         //This is a dumb hack that should be resolved in another way. Essentially checks if we're about to make the first change to a chunk, if yes add it to the queue to regenerate mesh.
-        if (!terrainData[_chunkPos].MeshOutdated)
-            outdatedChunks.Enqueue(terrainData[_chunkPos]);
+        if (!terrainData[_chunkPos].meshOutdated)
+            chunkGenerator.EnqueueOutdatedChunk(terrainData[_chunkPos]);
 
         terrainData[_chunkPos][_posInChunkX, _posInChunkY, _posInChunkZ] = Mathf.Clamp(terrainData[_chunkPos][_posInChunkX, _posInChunkY, _posInChunkZ] + _changeAmount,0,1);
     }
@@ -313,20 +288,24 @@ public class ProceduralTerrain : MonoBehaviour
         return new Vector3(Mathf.Round(_vec.x), Mathf.Round(_vec.y), Mathf.Round(_vec.z));
     }
 
-    private TerrainChunk CreateEmptyChunk(Vector3 _chunkPosition)
+    private TerrainChunk CreateEmptyChunk(Vector3 _chunkPosition, bool _highPriority = false)
     {
-        TerrainChunk chunk = new TerrainChunk(noiseMap, _chunkPosition, settings.chunkDims, transform, chunkPrefab);
+        TerrainChunk chunk = new TerrainChunk(_chunkPosition, settings.chunkDims, transform, chunkPrefab);
 
-        chunk.terrainMap = noiseMap.EvaluateChunk(chunk.rawPosition, chunk.dims + 1);
+        terrainData.Add(_chunkPosition, chunk);
+
+        chunkGenerator.EnqueueChunk(chunk, _highPriority);
 
         return chunk;
     }
 
     private TerrainChunk CreateChunk(Vector3 _chunkPosition)
     {
-        TerrainChunk chunk = CreateEmptyChunk(_chunkPosition);
+        TerrainChunk chunk = new TerrainChunk(_chunkPosition, settings.chunkDims, transform, chunkPrefab);
 
-        meshGenerator.GenerateChunkMesh(chunk);
+        terrainData.Add(_chunkPosition, chunk);
+
+        chunkGenerator.GenerateChunkImmediately(chunk);
 
         return chunk;
     }
@@ -354,10 +333,10 @@ public class ProceduralTerrain : MonoBehaviour
             }
         }
 
-        if (meshGenerator != null)
+        if (chunkGenerator != null)
         {
-            meshGenerator.Dispose();
-            meshGenerator = null;
+            chunkGenerator.Dispose();
+            chunkGenerator = null;
         }
     }
 

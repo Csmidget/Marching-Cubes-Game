@@ -22,27 +22,21 @@ class ComputeShaderMeshGenerator : IMeshGenerator
     ComputeBuffer triCountBuffer;
     TerrainSettings.ComputeShaderTerrainSettings settings;
 
-
-    public override void Init(TerrainSettings.TerrainInnerSettings _settings)
+    public ComputeShaderMeshGenerator(float _clipPercent) : base(_clipPercent)
     {
-        base.Init(_settings);
-
-        settings = (TerrainSettings.ComputeShaderTerrainSettings)_settings;
-
         shader = settings.shader;
-        shader.SetFloat("_clipValue", _settings.clipPercent);
+        shader.SetFloat("_clipValue", _clipPercent);
         kernel = shader.FindKernel("CSMain");
 
         int dims = settings.chunkDims;
         int rawDims = dims + 1;
 
-        terrainValues = new ComputeBuffer(rawDims*rawDims*rawDims, sizeof(float));
-        resultTriangles = new ComputeBuffer(dims*dims*dims * 5, 36, ComputeBufferType.Append);
+        terrainValues = new ComputeBuffer(rawDims * rawDims * rawDims, sizeof(float));
+        resultTriangles = new ComputeBuffer(dims * dims * dims * 5, 36, ComputeBufferType.Append);
         triCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
 
         shader.SetBuffer(kernel, "_terrainValues", terrainValues);
         shader.SetBuffer(kernel, "_resultTriangles", resultTriangles);
-       // shader.SetInt("dimLen", dims);    
     }
 
     public override void GenerateChunkMesh(in TerrainChunk _chunk)

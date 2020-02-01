@@ -1,15 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using Unity.Burst;
+using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
-using Unity.Burst;
-using Unity.Collections;
 
-public class NoiseMap3D
+public class NoiseGenerator
 {
     ChunkNoiseJob job;
 
-    public NoiseMap3D(int _seed, float _frequency, Vector3 _offset)
+    public NoiseGenerator(int _seed, float _frequency, Vector3 _offset)
     {
         job = new ChunkNoiseJob();
         job.frequency = _frequency;
@@ -17,7 +15,7 @@ public class NoiseMap3D
         job.noise = new Noise(_seed);
     }
 
-    ~NoiseMap3D()
+    public void Dispose()
     {
         job.noise.Dispose();
     }

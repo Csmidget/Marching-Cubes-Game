@@ -10,14 +10,11 @@ using UnityEngine;
 
 public class MCubesParallelJobMeshGenerator : IMeshGenerator
 {
-    public override void Init(TerrainSettings.TerrainInnerSettings _settings)
-    {
-        base.Init(_settings);
-    }
+    public MCubesParallelJobMeshGenerator(float _clipPercent) : base(_clipPercent) {; }
 
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
     {
-        if (!_chunk.MeshOutdated)
+        if (!_chunk.meshOutdated)
             return;
 
         Stopwatch stopwatch = new Stopwatch();

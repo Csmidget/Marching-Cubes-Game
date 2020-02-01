@@ -64,6 +64,9 @@ public class TerrainSettings
         [Range(1, 10)]
         public int maxRenderDistance = 6; //
 
+        [Range(1, 10)]
+        public int chunksPerFrame;
+
     }
 
     [System.Serializable]

@@ -10,6 +10,13 @@ public abstract class IMeshGenerator
 
     protected float clipValue;
 
+    public IMeshGenerator(float _clipPercent)
+    {
+        clipValue = _clipPercent;
+        chunksToGeneratePriority = new Queue<TerrainChunk>();
+        chunksToGenerate = new Queue<TerrainChunk>();
+    }
+
     public virtual void Update()
     {
         if (chunksToGeneratePriority.Count > 0)
@@ -33,30 +40,25 @@ public abstract class IMeshGenerator
     }
     
     public abstract void GenerateChunkMesh(in TerrainChunk _chunkData);
-    public virtual void Init(TerrainSettings.TerrainInnerSettings _settings) 
-    { 
-        clipValue = _settings.clipPercent;
-        chunksToGeneratePriority = new Queue<TerrainChunk>();
-        chunksToGenerate = new Queue<TerrainChunk>();
-    }
 
     public virtual void Dispose() {; }
+
 }
 
 public static class MeshGeneratorFactory
 {
-    public static IMeshGenerator Create(RenderType _renderType)
+    public static IMeshGenerator Create(RenderType _renderType, float _clipPercent)
     {
         switch (_renderType)
         {
             case RenderType.MarchingCubes:
-                return new MarchingCubesMeshGenerator();
+                return new MarchingCubesMeshGenerator(_clipPercent);
             case RenderType.ComputeShader:
-                return new ComputeShaderMeshGenerator();
+                return new ComputeShaderMeshGenerator(_clipPercent);
             case RenderType.MarchingCubesParallelJob:
-                return new MCubesParallelJobMeshGenerator();
+                return new MCubesParallelJobMeshGenerator(_clipPercent);
             case RenderType.MarchingCubeIndividualJob:
-                return new MCubesIndividualJobMeshGenerator();
+                return new MCubesIndividualJobMeshGenerator(_clipPercent);
         }
 
         throw new System.Exception("Unable to create MeshGenerator for RenderType: " + _renderType.ToString());

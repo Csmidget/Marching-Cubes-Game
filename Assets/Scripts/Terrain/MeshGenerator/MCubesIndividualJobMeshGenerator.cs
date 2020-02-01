@@ -19,6 +19,11 @@ public class MCubesIndividualJobMeshGenerator : IMeshGenerator
 
     List<JobData> activeJobs;
 
+    public MCubesIndividualJobMeshGenerator(float _clipPercent) : base(_clipPercent)
+    {
+        activeJobs = new List<JobData>(8);
+    }
+
     public override void Update()
     {
         for (int i = activeJobs.Count - 1; i >= 0 ; i--)
@@ -77,16 +82,9 @@ public class MCubesIndividualJobMeshGenerator : IMeshGenerator
         _jobData.chunk.ApplyMesh();
     }
 
-    public override void Init(TerrainSettings.TerrainInnerSettings _settings)
-    {
-        base.Init(_settings);
-        activeJobs = new List<JobData>(8);
-    }
-
-
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
     {
-        if (!_chunk.MeshOutdated)
+        if (!_chunk.meshOutdated)
             return;
 
         MeshData meshData = new MeshData(false);

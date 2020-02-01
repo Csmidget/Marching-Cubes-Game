@@ -447,6 +447,7 @@ MonoBehaviour:
       offset: {x: 0, y: 0, z: 0}
       minRenderDistance: 6
       maxRenderDistance: 10
+      chunksPerFrame: 0
     computeShaderTerrainSettings:
       seed: 0
       frequency: 0.0323
@@ -454,6 +455,7 @@ MonoBehaviour:
       offset: {x: 0, y: 0, z: 0}
       minRenderDistance: 6
       maxRenderDistance: 10
+      chunksPerFrame: 0
       shader: {fileID: 7200000, guid: 0d9a9760f92783640bb1daaaee812bcb, type: 3}
     mCubesParallelJobTerrainSettings:
       seed: 0
@@ -462,6 +464,7 @@ MonoBehaviour:
       offset: {x: 0, y: 0, z: 0}
       minRenderDistance: 6
       maxRenderDistance: 10
+      chunksPerFrame: 0
     mCubesIndividualJobTerrainSettings:
       seed: 0
       frequency: 0.0323
@@ -469,6 +472,7 @@ MonoBehaviour:
       offset: {x: 0, y: 0, z: 0}
       minRenderDistance: 6
       maxRenderDistance: 10
+      chunksPerFrame: 8
 --- !u!4 &1973795516
 Transform:
   m_ObjectHideFlags: 0
