@@ -15,19 +15,19 @@ public class TerrainGenEditor : Editor
         {
             if (terrainGen.autoUpdate)
             {
-                terrainGen.Reset();
-                terrainGen.GenerateMap();
+                terrainGen.Clear();
+                terrainGen.Init();
             }
         }
 
         if (GUILayout.Button("Generate"))
         {
-            terrainGen.Reset();
-            terrainGen.GenerateMap();
+            terrainGen.Clear();
+            terrainGen.Init();
         }
         if (GUILayout.Button("Clear"))
         {
-            terrainGen.Reset();
+            terrainGen.Clear();
         }
     }
 

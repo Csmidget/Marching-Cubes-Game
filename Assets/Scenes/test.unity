@@ -122,36 +122,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &412941966
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 412941967}
-  m_Layer: 0
-  m_Name: Viewer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &412941967
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 412941966}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &628176280
 GameObject:
   m_ObjectHideFlags: 0
@@ -391,6 +361,7 @@ MonoBehaviour:
   power: 0.2
   range: 1000
   radius: 3
+  terrainManager: {fileID: 1973795515}
 --- !u!114 &1796052653
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -439,15 +410,15 @@ MonoBehaviour:
   chunkPrefab: {fileID: 4622274691877607373, guid: 2826151d2840a25428bb8b20c42ce3d9,
     type: 3}
   terrainSettings:
-    renderType: 3
-    marchingCubesTerrainSettings:
+    renderType: 2
+    basicTerrainSettings:
       seed: 0
       frequency: 0.0323
       clipPercent: 0.3
       offset: {x: 0, y: 0, z: 0}
       minRenderDistance: 6
       maxRenderDistance: 10
-      chunksPerFrame: 0
+      chunksPerFrame: 1
     computeShaderTerrainSettings:
       seed: 0
       frequency: 0.0323
@@ -455,17 +426,17 @@ MonoBehaviour:
       offset: {x: 0, y: 0, z: 0}
       minRenderDistance: 6
       maxRenderDistance: 10
-      chunksPerFrame: 0
+      chunksPerFrame: 8
       shader: {fileID: 7200000, guid: 0d9a9760f92783640bb1daaaee812bcb, type: 3}
-    mCubesParallelJobTerrainSettings:
+    jobSystemFullSettings:
       seed: 0
       frequency: 0.0323
       clipPercent: 0.3
       offset: {x: 0, y: 0, z: 0}
       minRenderDistance: 6
       maxRenderDistance: 10
-      chunksPerFrame: 0
-    mCubesIndividualJobTerrainSettings:
+      chunksPerFrame: 8
+    jobSystemPartialSettings:
       seed: 0
       frequency: 0.0323
       clipPercent: 0.3

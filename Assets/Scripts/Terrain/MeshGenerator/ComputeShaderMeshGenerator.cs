@@ -1,4 +1,9 @@
-﻿using System;
+﻿//As this script interacts with compute shaders, unity throws out warnings that data is never assigned to,
+//even though it is assigned to when copied from the compute result. The pragma suppresses this specific warning.
+#pragma warning disable 0649
+
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,15 +25,14 @@ class ComputeShaderMeshGenerator : IMeshGenerator
     ComputeBuffer terrainValues;
     ComputeBuffer resultTriangles;
     ComputeBuffer triCountBuffer;
-    TerrainSettings.ComputeShaderTerrainSettings settings;
 
-    public ComputeShaderMeshGenerator(float _clipPercent) : base(_clipPercent)
+    public ComputeShaderMeshGenerator(ComputeShaderTerrainSettings _settings) : base(_settings)
     {
-        shader = settings.shader;
-        shader.SetFloat("_clipValue", _clipPercent);
+        shader = _settings.shader;
+        shader.SetFloat("_clipValue", _settings.clipPercent);
         kernel = shader.FindKernel("CSMain");
 
-        int dims = settings.chunkDims;
+        int dims = _settings.chunkDims;
         int rawDims = dims + 1;
 
         terrainValues = new ComputeBuffer(rawDims * rawDims * rawDims, sizeof(float));
@@ -43,7 +47,7 @@ class ComputeShaderMeshGenerator : IMeshGenerator
     {
         MeshData meshData = new MeshData();
 
-        terrainValues.SetData(_chunk.terrainMap);
+        terrainValues.SetData(_chunk.TerrainMap);
 
         resultTriangles.SetCounterValue(0);
         

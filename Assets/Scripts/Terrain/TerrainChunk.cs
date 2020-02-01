@@ -11,29 +11,35 @@ public class TerrainChunk
 {
     GameObject chunkObject;
 
-    public float[] terrainMap { get; private set; }
-    public Vector3 position { get; private set; }
-    public Vector3 rawPosition { get; private set; }
-    public int dims { get; private set; }
-    public int rawDims { get; private set; }
-    public bool meshOutdated { get; private set; }
-
-    public bool mapGenerated { get; private set; }
-
     private MeshData meshData;
     private MeshFilter meshFilter;
     private MeshCollider meshCollider;
 
+    public readonly Vector3 position;
+    public readonly Vector3 rawPosition;
+
+    public readonly int dims;
+    public readonly int rawDims;
+
+    public readonly int size;
+    public readonly int rawSize;
+
+    public float[] TerrainMap { get; private set; }
+    public bool MeshOutdated { get; private set; }
+    public bool HasMesh { get { return meshData != null; } }
 
     public TerrainChunk(Vector3 _position, int _dims, Transform _parent, GameObject _chunkPrefab)
     {
         position = _position;
         dims = _dims;
         rawDims = dims + 1;
+
+        size = dims * dims * dims;
+        rawSize = rawDims * rawDims * rawDims;
+
         meshData = null;
-        meshOutdated = true;
-        mapGenerated = false;
-        terrainMap = new float[rawDims * rawDims * rawDims];
+        MeshOutdated = true;
+        TerrainMap = new float[rawDims * rawDims * rawDims];
 
         rawPosition = new Vector3(position.x * dims, position.y * dims, position.z * dims);
 
@@ -45,29 +51,13 @@ public class TerrainChunk
     }
 
     /// <summary>
-    /// NON RANGE CHECKED get from terrainMap. Less efficient than direct access.
+    /// Replaces the entire terrainMap with a new map.
     /// </summary>
-    public float this[int _x, int _y, int _z]
-    {
-        get { return terrainMap[_x + rawDims * _y + rawDims * rawDims * _z]; }
-        set { terrainMap[_x + rawDims * _y + rawDims * rawDims * _z] = value; meshOutdated = true; }
-    }
-
-    public float this[Vector3Int _xyz]
-    {
-        get { return terrainMap[_xyz.x + rawDims * _xyz.y + rawDims * rawDims * _xyz.z]; }
-        set { terrainMap[_xyz.x + rawDims * _xyz.y + rawDims * rawDims * _xyz.z] = value; meshOutdated = true; }
-    }
-    public bool HasMesh
-    {
-        get { return meshData != null; }
-    }
-
+    /// <param name="_terrainMap"></param>
     public void SetMap(float[] _terrainMap)
     {
-        terrainMap = _terrainMap;
-        mapGenerated = true;
-        meshOutdated = true;
+        TerrainMap = _terrainMap;
+        MeshOutdated = true;
     }
 
     public bool IsActive
@@ -95,7 +85,7 @@ public class TerrainChunk
 
         meshFilter.sharedMesh = meshData.CreateMesh(false);
         meshCollider.sharedMesh = meshData.CreateMesh(true);
-        meshOutdated = false;
+        MeshOutdated = false;
     }
 
     public void Destroy()
@@ -110,7 +100,25 @@ public class TerrainChunk
     }
 
     /// <summary>
-    /// Range checked get from terrainMap. Least efficient access.
+    /// Non range checked direct get/set from/to terrainMap.
+    /// </summary>
+    public float this[int _xyz]
+    {
+        get { return TerrainMap[_xyz]; }
+        set { TerrainMap[_xyz] = value; MeshOutdated = true; }
+    }
+
+    /// <summary>
+    /// Non range checked get/set from terrainMap. Less efficient than direct get/set.
+    /// </summary>
+    public float this[int _x, int _y, int _z]
+    {
+        get { return TerrainMap[_x + rawDims * _y + rawDims * rawDims * _z]; }
+        set { TerrainMap[_x + rawDims * _y + rawDims * rawDims * _z] = value; MeshOutdated = true; }
+    }
+
+    /// <summary>
+    /// Range checked get from terrainMap.
     /// </summary>
     public float Get(int _x, int _y, int _z)
     {
@@ -124,13 +132,20 @@ public class TerrainChunk
         return this[_x, _y, _z];           
     }
 
-    public int Size()
+    /// <summary>
+    /// Range checked set to terrainMap.
+    /// </summary>
+    public void Set(int _x, int _y, int _z, int _value)
     {
-        return dims * dims * dims;
-    }
+        if (_x < dims)
+            throw new ArgumentOutOfRangeException("_x", "_x: " + _x + ". value entered greater than width");
+        if (_y < dims)
+            throw new ArgumentOutOfRangeException("_y", "_y: " + _y + ". value entered greater than height");
+        if (_z < dims)
+            throw new ArgumentOutOfRangeException("_z", "_z: " + _z + ". value entered greater than depth");
 
-    public int RawSize()
-    {
-        return rawDims * rawDims * rawDims;
+        MeshOutdated = true;
+
+        this[_x, _y, _z] = _value;
     }
 }

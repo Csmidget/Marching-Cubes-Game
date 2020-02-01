@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -8,96 +8,55 @@ using UnityEngine;
 
 //Edge list, Triangle list and pseudo code from: http://paulbourke.net/geometry/polygonise/
 
-public class MCubesIndividualJobMeshGenerator : IMeshGenerator
+public class JobSystemPartialMeshGenerator : IMeshGenerator
 {
-    struct JobData
-    {
-        public JobHandle handle;
-        public GenMesh job;
-        public TerrainChunk chunk;
-    }
-
-    List<JobData> activeJobs;
-
-    public MCubesIndividualJobMeshGenerator(float _clipPercent) : base(_clipPercent)
-    {
-        activeJobs = new List<JobData>(8);
-    }
-
-    public override void Update()
-    {
-        for (int i = activeJobs.Count - 1; i >= 0 ; i--)
-        {
-            if (activeJobs[i].handle.IsCompleted)
-            {
-                CompleteGenMeshJob(activeJobs[i]);
-                activeJobs.RemoveAt(i);
-            }
-        }
-
-        while (activeJobs.Count < 8)
-        {
-            if (chunksToGeneratePriority.Count > 0)
-            {
-                activeJobs.Add(StartGenMeshJob(chunksToGeneratePriority.Dequeue()));
-                continue;
-            }
-            else if (chunksToGenerate.Count > 0)
-            {
-                activeJobs.Add(StartGenMeshJob(chunksToGenerate.Dequeue()));
-                continue;
-            }
-
-            break;
-        }
-    }
-
-    private JobData StartGenMeshJob(TerrainChunk _chunk)
-    {
-        JobData data;
-
-        data.chunk = _chunk;
-
-        data.job = new GenMesh(_chunk.dims, clipValue, _chunk.RawSize());
-        data.job.terrainMap.CopyFrom(_chunk.terrainMap);
-
-        data.handle = data.job.Schedule();
-
-        return data;
-    }
-
-    private void CompleteGenMeshJob(JobData _jobData)
-    {
-        _jobData.handle.Complete();
-
-        MeshData meshData = new MeshData(false);
-
-        meshData.vertices = _jobData.job.vertices.ToArray();
-        meshData.normals = _jobData.job.normals.ToArray();
-        meshData.triangles = _jobData.job.triangles.ToArray();
-
-        _jobData.job.Dispose();
-
-        _jobData.chunk.SetMeshData(meshData);
-        _jobData.chunk.ApplyMesh();
-    }
+    public JobSystemPartialMeshGenerator(TerrainSettings _settings) : base(_settings) {; }
 
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
     {
-        if (!_chunk.meshOutdated)
+        if (!_chunk.MeshOutdated)
             return;
 
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
         MeshData meshData = new MeshData(false);
+        List<Vector3> vertices = new List<Vector3>();
+        List<Vector3> normals = new List<Vector3>();
+        List<int> triangles = new List<int>();
 
-        var job = new GenMesh(_chunk.dims, clipValue, _chunk.RawSize());
-        job.terrainMap.CopyFrom(_chunk.terrainMap);
+        var job = new SolveMarchingCubeJob(_chunk.dims, clipValue);
+        
+        job.terrainMap.CopyFrom(_chunk.TerrainMap);
 
-        var handle = job.Schedule();
+        var handle = job.Schedule(_chunk.size, 8);
         handle.Complete();
 
-        meshData.vertices = job.vertices.ToArray();
-        meshData.normals = job.normals.ToArray();
-        meshData.triangles = job.triangles.ToArray();
+        int currIndex = 0;
+        for (int i = 0; i < job.triangles.Length; i ++)
+        {
+            if (!job.triangles[i].valid)
+                continue;
+
+            vertices.Add(job.triangles[i].vert1);
+            vertices.Add(job.triangles[i].vert2);
+            vertices.Add(job.triangles[i].vert3);
+
+            normals.Add(job.triangles[i].normal);
+            normals.Add(job.triangles[i].normal);
+            normals.Add(job.triangles[i].normal);
+
+            triangles.Add(currIndex);
+            triangles.Add(currIndex + 1);
+            triangles.Add(currIndex + 2);
+
+            currIndex += 3;
+
+        }
+
+        meshData.vertices = vertices.ToArray();
+        meshData.triangles = triangles.ToArray();
+        meshData.normals = normals.ToArray();
+
 
         job.Dispose();
 
@@ -105,132 +64,96 @@ public class MCubesIndividualJobMeshGenerator : IMeshGenerator
         _chunk.ApplyMesh();
     }
 
-    [BurstCompile]
-    struct GenMesh : IJob
+    struct Triangle
     {
-        public int dims;
-        public int rawDims;
-        public float clipValue;
-        public NativeArray<float> terrainMap;
-        public NativeList<Vector3> vertices;
-        public NativeList<Vector3> normals;
-        public NativeList<int> triangles;
-        NativeList<Vector3> cubeVertices;
-        NativeList<Vector3> cubeNormals;
+       public bool valid;
+       public float3 vert1;
+       public float3 vert2;
+       public float3 vert3;
+       public float3 normal;
+    }
 
-        public GenMesh(int _dims, float _clipValue, int _rawSize)
+    [BurstCompile]
+    struct SolveMarchingCubeJob : IJobParallelFor
+    {
+        readonly public int dims;
+        readonly public int rawDims;
+        readonly public float clipVal;
+
+        [NativeDisableParallelForRestriction]
+        [WriteOnly]
+        public NativeArray<Triangle> triangles;
+
+
+        [ReadOnly]
+        public NativeArray<float> terrainMap;
+
+        public SolveMarchingCubeJob(in int _dims, in float _clipVal)
         {
+            clipVal = _clipVal;
             dims = _dims;
             rawDims = _dims + 1;
-            clipValue = _clipValue;
-            terrainMap = new NativeArray<float>(_rawSize, Allocator.TempJob);
-            vertices = new NativeList<Vector3>(_rawSize * 15, Allocator.TempJob);
-            normals = new NativeList<Vector3>(_rawSize * 15, Allocator.TempJob);
-            cubeVertices = new NativeList<Vector3>(15, Allocator.TempJob);
-            cubeNormals = new NativeList<Vector3>(15, Allocator.TempJob);
-            triangles = new NativeList<int>(_rawSize * 15, Allocator.TempJob);
+            int size = dims * dims * dims;
+            int rawSize = rawDims * rawDims * rawDims;
+
+            triangles = new NativeArray<Triangle>(size * 5 + 5, Allocator.TempJob);
+            terrainMap = new NativeArray<float>(rawSize, Allocator.TempJob);
         }
 
         public void Dispose()
         {
             terrainMap.Dispose();
-            vertices.Dispose();
             triangles.Dispose();
-            normals.Dispose();
-            cubeVertices.Dispose();
-            cubeNormals.Dispose();
         }
 
-        public void Execute()
+        public void Execute(int index)
         {
-            int verticesIndex = 0;
+            int x = Mod(index, dims);
+            int y = Mod((index - x) / dims, dims);
+            int z = (((index - x) / dims) - y) / dims;
 
-            for (int x = 0; x < dims; x++)
+            //Cube index tells us which edges of the cube are active (visible)
+            int cubeIndex = GetCubeIndex(x, y, z);
+
+            //if none of the edges of the cube are visible. Ignore the cube.
+            if (edgeTable[cubeIndex] == 0)
+                return;
+
+            int3 xyz = new int3(x, y, z);
+            int verticesStart = index * 5;
+
+            for (int i = 0; TriTableVal(cubeIndex, i) != -1; i += 3)
             {
-                for (int y = 0; y < dims; y++)
-                {
-                    for (int z = 0; z < dims; z++)
-                    {
-                        //Cube index tells us which edges of the cube are active (visible)
-                        int cubeIndex = GetCubeIndex(x, y, z);
+                int3 vertex1A = (pointToVertex[edgeToPointA[TriTableVal(cubeIndex, i)]]) + xyz;
+                int3 vertex1B = (pointToVertex[edgeToPointB[TriTableVal(cubeIndex, i)]]) + xyz;
 
-                        //if none of the edges of the cube are visible. Ignore the cube.
-                        if (edgeTable[cubeIndex] == 0)
-                            continue;
+                int3 vertex2A = (pointToVertex[edgeToPointA[TriTableVal(cubeIndex, i + 1)]]) + xyz;
+                int3 vertex2B = (pointToVertex[edgeToPointB[TriTableVal(cubeIndex, i + 1)]]) + xyz;
 
-                        int3 xyz = new int3(x, y, z);
+                int3 vertex3A = (pointToVertex[edgeToPointA[TriTableVal(cubeIndex, i + 2)]]) + xyz;
+                int3 vertex3B = (pointToVertex[edgeToPointB[TriTableVal(cubeIndex, i + 2)]]) + xyz;
 
-                        cubeVertices.Clear();
-                        cubeNormals.Clear();
+                Triangle tri = new Triangle();
 
-                        for (int i = 0; TriTableVal(cubeIndex, i) != -1; i += 3)
-                        {
-                            int3 vertex1A = pointToVertex[edgeToPointA[TriTableVal(cubeIndex, i)]] + xyz;
-                            int3 vertex1B = pointToVertex[edgeToPointB[TriTableVal(cubeIndex, i)]] + xyz;
+                tri.vert1 = InterpBetweenTerrainPoints(vertex1A, vertex1B);
+                tri.vert2 = InterpBetweenTerrainPoints(vertex2A, vertex2B);
+                tri.vert3 = InterpBetweenTerrainPoints(vertex3A, vertex3B);
 
-                            int3 vertex2A = pointToVertex[edgeToPointA[TriTableVal(cubeIndex, i + 1)]] + xyz;
-                            int3 vertex2B = pointToVertex[edgeToPointB[TriTableVal(cubeIndex, i + 1)]] + xyz;
+                tri.normal = math.cross(tri.vert2 - tri.vert1, tri.vert3 - tri.vert1);
+                tri.valid = true;
 
-                            int3 vertex3A = pointToVertex[edgeToPointA[TriTableVal(cubeIndex, i + 2)]] + xyz;
-                            int3 vertex3B = pointToVertex[edgeToPointB[TriTableVal(cubeIndex, i + 2)]] + xyz;
-
-                            Vector3 vertex1 = InterpBetweenTerrainPoints(vertex1A, vertex1B);
-                            Vector3 vertex2 = InterpBetweenTerrainPoints(vertex2A, vertex2B);
-                            Vector3 vertex3 = InterpBetweenTerrainPoints(vertex3A, vertex3B);
-
-                            Vector3 normal = math.cross(vertex2 - vertex1, vertex3 - vertex1);
-
-                            cubeVertices.Add(vertex1);
-                            cubeVertices.Add(vertex2);
-                            cubeVertices.Add(vertex3);
-
-                            cubeNormals.Add(normal);
-                            cubeNormals.Add(normal);
-                            cubeNormals.Add(normal);
-                        }
-
-                        vertices.AddRange(cubeVertices);
-                        normals.AddRange(cubeNormals);
-                        for (int i = 0; i < cubeVertices.Length; i++)
-                        {
-                            triangles.Add(verticesIndex + i);
-                        }
-
-                        verticesIndex += cubeVertices.Length;
-                    }
-                }
+                triangles[verticesStart + i] = tri;
             }
         }
 
-        private Vector3 InterpBetweenTerrainPoints(int3 _p1, int3 _p2)
+        public int Mod(int a, int b)
         {
-            float p1Val = At(_p1.x, _p1.y, _p1.z);
-            float p2Val = At(_p2.x, _p2.y, _p2.z);
-
-            float lerpVal = (clipValue - p1Val) / (p2Val - p1Val);
-
-            return math.lerp(_p1, _p2, lerpVal);
+            return (math.abs(a * b) + a) % b;
         }
 
-        private float At(int x, int y, int z)
+        public float At(int _x, int _y, int _z)
         {
-            return terrainMap[x + rawDims * y + rawDims * rawDims * z];
-        }
-
-        private int GetCubeIndex(int x, int y, int z)
-        {
-            int cubeIndex = 0;
-
-            if (At(x, y, z) > clipValue) cubeIndex += 1;
-            if (At(x + 1, y, z) > clipValue) cubeIndex += 2;
-            if (At(x + 1, y, z + 1) > clipValue) cubeIndex += 4;
-            if (At(x, y, z + 1) > clipValue) cubeIndex += 8;
-            if (At(x, y + 1, z) > clipValue) cubeIndex += 16;
-            if (At(x + 1, y + 1, z) > clipValue) cubeIndex += 32;
-            if (At(x + 1, y + 1, z + 1) > clipValue) cubeIndex += 64;
-            if (At(x, y + 1, z + 1) > clipValue) cubeIndex += 128;
-
-            return cubeIndex;
+            return terrainMap[_x + rawDims * _y + rawDims * rawDims * _z];
         }
 
         public int TriTableVal(int i, int j)
@@ -238,6 +161,31 @@ public class MCubesIndividualJobMeshGenerator : IMeshGenerator
             return triTable[i * 16 + j];
         }
 
+        private int GetCubeIndex(int x, int y, int z)
+        {
+            int cubeIndex = 0;
+
+            if (At(x, y, z) > clipVal) cubeIndex += 1;
+            if (At(x + 1, y, z) > clipVal) cubeIndex += 2;
+            if (At(x + 1, y, z + 1) > clipVal) cubeIndex += 4;
+            if (At(x, y, z + 1) > clipVal) cubeIndex += 8;
+            if (At(x, y + 1, z) > clipVal) cubeIndex += 16;
+            if (At(x + 1, y + 1, z) > clipVal) cubeIndex += 32;
+            if (At(x + 1, y + 1, z + 1) > clipVal) cubeIndex += 64;
+            if (At(x, y + 1, z + 1) > clipVal) cubeIndex += 128;
+
+            return cubeIndex;
+        }
+
+        private float3 InterpBetweenTerrainPoints(int3 _p1, int3 _p2)
+        {
+            float p1Val = At(_p1.x, _p1.y, _p1.z);
+            float p2Val = At(_p2.x, _p2.y, _p2.z);
+
+            float lerpVal = (clipVal - p1Val) / (p2Val - p1Val);
+
+            return math.lerp(_p1, _p2, lerpVal);
+        }
     }
 
     #region DataTables
@@ -554,4 +502,5 @@ public class MCubesIndividualJobMeshGenerator : IMeshGenerator
             new int3( 0, 1, 1 )
         };
     #endregion
+
 }

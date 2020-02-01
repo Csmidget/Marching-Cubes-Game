@@ -10,10 +10,7 @@ public class MeshData
     public Vector3[] normals;
     bool calculateNormals = true;
 
-    public MeshData()
-    {
-
-    }
+    public MeshData(){; }
 
     public MeshData(bool _calculateNormals) : this()
     {

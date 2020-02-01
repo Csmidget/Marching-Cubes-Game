@@ -7,17 +7,12 @@ public class NoiseGenerator
 {
     ChunkNoiseJob job;
 
-    public NoiseGenerator(int _seed, float _frequency, Vector3 _offset)
+    public NoiseGenerator(TerrainSettings _settings)
     {
         job = new ChunkNoiseJob();
-        job.frequency = _frequency;
-        job.offset = _offset;
-        job.noise = new Noise(_seed);
-    }
-
-    public void Dispose()
-    {
-        job.noise.Dispose();
+        job.frequency = _settings.frequency;
+        job.offset = _settings.offset;
+        job.noise = new Noise(_settings.seed);
     }
 
     public float[] EvaluateChunk(Vector3 _chunkRawPos, int _chunkRawDims)
@@ -36,6 +31,12 @@ public class NoiseGenerator
 
         return noiseValues;
     }
+
+    public void Dispose()
+    {
+        job.noise.Dispose();
+    }
+
 }
 
 [BurstCompile]

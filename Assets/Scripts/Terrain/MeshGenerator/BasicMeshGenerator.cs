@@ -4,22 +4,23 @@ using UnityEngine;
 
 //Edge list, Triangle list and pseudo code from: http://paulbourke.net/geometry/polygonise/
 
-public class MarchingCubesMeshGenerator : IMeshGenerator
+public class BasicMeshGenerator : IMeshGenerator
 {
 
-    public MarchingCubesMeshGenerator(float _clipPercent) : base(_clipPercent) {; }
+    public BasicMeshGenerator(TerrainSettings _settings) : base(_settings) {; }
 
     public override void GenerateChunkMesh(in TerrainChunk _chunk)
     {
-        if (!_chunk.meshOutdated)
+        if (!_chunk.MeshOutdated)
             return;
 
         MeshData meshData = new MeshData(false);
         int verticesIndex = 0;
 
-        List<Vector3> vertices = new List<Vector3>(_chunk.Size()*15);
-        List<Vector3> normals = new List<Vector3>(_chunk.Size() * 15);
-        List<int> triangles = new List<int>(_chunk.Size() * 15);
+        int chunkSize = _chunk.size;
+        List<Vector3> vertices = new List<Vector3>(chunkSize * 15);
+        List<Vector3> normals = new List<Vector3>(chunkSize * 15);
+        List<int> triangles = new List<int>(chunkSize * 15);
         List<Vector3> cubeVertices = new List<Vector3>(15);
         List<Vector3> cubeNormals = new List<Vector3>(15);
 

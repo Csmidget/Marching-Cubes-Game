@@ -7,27 +7,31 @@ public class ChunkGenerator
     private IMeshGenerator meshGenerator;
     private NoiseGenerator noiseGenerator;
 
-    private Queue<TerrainChunk> priorityChunkQueue;
-    private Queue<TerrainChunk> chunkQueue;
+    //Outdated chunks will have their mesh regenerated immediately.
     private Queue<TerrainChunk> outdatedChunks;
 
+    //Priority chunks are chunks that sit within the minimum render distance. They will be generated first.
+    private Queue<TerrainChunk> priorityChunkQueue;
+    private Queue<TerrainChunk> chunkQueue;
+
+    //The number of chunks to generate per frame.
     private int chunksPerFrame;
 
 
-    public ChunkGenerator(TerrainSettings _settings)
+    public ChunkGenerator(EditorTerrainSettings _typeSettings)
     {
-        var innerSettings = _settings.Get();
+        var settings = _typeSettings.Get();
 
-        meshGenerator = MeshGeneratorFactory.Create(_settings.renderType, innerSettings.clipPercent);
-        noiseGenerator = new NoiseGenerator(innerSettings.seed, innerSettings.frequency, innerSettings.offset);
-        chunksPerFrame = innerSettings.chunksPerFrame;
+        meshGenerator = MeshGeneratorFactory.Create(_typeSettings);
+        noiseGenerator = new NoiseGenerator(settings);
+        chunksPerFrame = settings.chunksPerFrame;
 
         priorityChunkQueue = new Queue<TerrainChunk>();
         chunkQueue = new Queue<TerrainChunk>();
         outdatedChunks = new Queue<TerrainChunk>();
     }
 
-    public void EnqueueChunk(TerrainChunk _chunk, bool _highPriority = false)
+    public void Enqueue(TerrainChunk _chunk, bool _highPriority = false)
     {
         if (_highPriority)
             priorityChunkQueue.Enqueue(_chunk);
@@ -35,7 +39,7 @@ public class ChunkGenerator
             chunkQueue.Enqueue(_chunk);
     }
 
-    public void EnqueueOutdatedChunk(TerrainChunk _chunk)
+    public void EnqueueOutdated(TerrainChunk _chunk)
     {
         outdatedChunks.Enqueue(_chunk);
     }
@@ -51,13 +55,13 @@ public class ChunkGenerator
             {
                 chunk = priorityChunkQueue.Dequeue();
                 chunk.SetMap(noiseGenerator.EvaluateChunk(chunk.rawPosition, chunk.rawDims));
-                meshGenerator.EnqueueChunk(chunk, true);
+                meshGenerator.Enqueue(chunk, true);
             }
             else if (chunkQueue.Count > 0)
             {
                 chunk = chunkQueue.Dequeue();
                 chunk.SetMap(noiseGenerator.EvaluateChunk(chunk.rawPosition, chunk.rawDims));
-                meshGenerator.EnqueueChunk(chunk);
+                meshGenerator.Enqueue(chunk);
             }
             else
                 break;           
@@ -69,26 +73,26 @@ public class ChunkGenerator
         {
             meshGenerator.GenerateChunkMesh(outdatedChunks.Dequeue());
         }
-
     }
 
-    public void GenerateChunkImmediately(TerrainChunk _chunk)
+    public void GenerateChunksImmediately()
     {
-        _chunk.SetMap(noiseGenerator.EvaluateChunk(_chunk.rawPosition, _chunk.rawDims));
-        meshGenerator.GenerateChunkMesh(_chunk);
-    }
-
-    public void GenerateAllChunks()
-    {
-        for (int i = 0; i < priorityChunkQueue.Count; i++)
+        while (priorityChunkQueue.Count > 0)
         {
-            GenerateChunkImmediately(priorityChunkQueue.Dequeue());
+            TerrainChunk chunk = priorityChunkQueue.Dequeue();
+            chunk.SetMap(noiseGenerator.EvaluateChunk(chunk.rawPosition, chunk.rawDims));
+            meshGenerator.Enqueue(chunk, true);
         }
 
-        for (int i = 0; i < chunkQueue.Count; i++)
+        while (chunkQueue.Count > 0)
         {
-            GenerateChunkImmediately(priorityChunkQueue.Dequeue());
+            TerrainChunk chunk = chunkQueue.Dequeue();
+            chunk.SetMap(noiseGenerator.EvaluateChunk(chunk.rawPosition, chunk.rawDims));
+            meshGenerator.Enqueue(chunk);
         }
+
+        meshGenerator.GenerateChunksImmediately();
+
     }
 
     public void Dispose()

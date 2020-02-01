@@ -5,38 +5,47 @@ using UnityEngine;
 
 public abstract class IMeshGenerator
 {
-    protected Queue<TerrainChunk> chunksToGeneratePriority;
-    protected Queue<TerrainChunk> chunksToGenerate;
+    protected Queue<TerrainChunk> priorityChunkQueue;
+    protected Queue<TerrainChunk> chunkQueue;
 
     protected float clipValue;
 
-    public IMeshGenerator(float _clipPercent)
+    public IMeshGenerator(TerrainSettings _settings)
     {
-        clipValue = _clipPercent;
-        chunksToGeneratePriority = new Queue<TerrainChunk>();
-        chunksToGenerate = new Queue<TerrainChunk>();
+        clipValue = _settings.clipPercent;
+        priorityChunkQueue = new Queue<TerrainChunk>();
+        chunkQueue = new Queue<TerrainChunk>();
     }
 
     public virtual void Update()
     {
-        if (chunksToGeneratePriority.Count > 0)
+        if (priorityChunkQueue.Count > 0)
         {
-            TerrainChunk currentChunk = chunksToGeneratePriority.Dequeue();
+            TerrainChunk currentChunk = priorityChunkQueue.Dequeue();
             GenerateChunkMesh(currentChunk);
         }
-        else if (chunksToGenerate.Count > 0)
+        else if (chunkQueue.Count > 0)
         {
-            TerrainChunk currentChunk = chunksToGenerate.Dequeue();
+            TerrainChunk currentChunk = chunkQueue.Dequeue();
             GenerateChunkMesh(currentChunk);
         }
     }
 
-    public virtual void EnqueueChunk(TerrainChunk _chunk, bool _highPriority = false)
+    public virtual void Enqueue(TerrainChunk _chunk, bool _highPriority = false)
     {
         if (_highPriority)
-            chunksToGeneratePriority.Enqueue(_chunk);
+            priorityChunkQueue.Enqueue(_chunk);
         else
-            chunksToGenerate.Enqueue(_chunk);
+            chunkQueue.Enqueue(_chunk);
+    }
+
+    public virtual void GenerateChunksImmediately()
+    {
+        while (priorityChunkQueue.Count > 0)
+            GenerateChunkMesh(priorityChunkQueue.Dequeue());
+        while (chunkQueue.Count > 0)
+            GenerateChunkMesh(chunkQueue.Dequeue());
+
     }
     
     public abstract void GenerateChunkMesh(in TerrainChunk _chunkData);
@@ -47,20 +56,23 @@ public abstract class IMeshGenerator
 
 public static class MeshGeneratorFactory
 {
-    public static IMeshGenerator Create(RenderType _renderType, float _clipPercent)
+    public static IMeshGenerator Create(EditorTerrainSettings _typeSettings)
     {
-        switch (_renderType)
+
+        TerrainSettings settings = _typeSettings.Get();
+
+        switch (_typeSettings.renderType)
         {
-            case RenderType.MarchingCubes:
-                return new MarchingCubesMeshGenerator(_clipPercent);
+            case RenderType.Basic:
+                return new BasicMeshGenerator(settings);
             case RenderType.ComputeShader:
-                return new ComputeShaderMeshGenerator(_clipPercent);
-            case RenderType.MarchingCubesParallelJob:
-                return new MCubesParallelJobMeshGenerator(_clipPercent);
-            case RenderType.MarchingCubeIndividualJob:
-                return new MCubesIndividualJobMeshGenerator(_clipPercent);
+                return new ComputeShaderMeshGenerator((ComputeShaderTerrainSettings)settings);
+            case RenderType.JobSystemPartial:
+                return new JobSystemPartialMeshGenerator(settings);
+            case RenderType.JobSystemFull:
+                return new JobSystemFullMeshGenerator(settings);
         }
 
-        throw new System.Exception("Unable to create MeshGenerator for RenderType: " + _renderType.ToString());
+        throw new System.Exception("Unable to create MeshGenerator for RenderType: " + _typeSettings.renderType.ToString());
     }
 }

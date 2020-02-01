@@ -2,76 +2,76 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum RenderType {MarchingCubes, ComputeShader, MarchingCubesParallelJob, MarchingCubeIndividualJob }
+public enum RenderType {Basic, ComputeShader, JobSystemFull, JobSystemPartial }
 
 [System.Serializable]
-public class TerrainSettings 
+public class EditorTerrainSettings 
 {
     public RenderType renderType;
 
     [SerializeField]
     [ConditionalHide("renderType", 0)]
-    private TerrainInnerSettings marchingCubesTerrainSettings;
+    private TerrainSettings basicTerrainSettings = null;
     [SerializeField]
     [ConditionalHide("renderType", 1)]
-    private ComputeShaderTerrainSettings computeShaderTerrainSettings;
+    private ComputeShaderTerrainSettings computeShaderTerrainSettings = null;
     [SerializeField]
     [ConditionalHide("renderType", 2)]
-    private TerrainInnerSettings mCubesParallelJobTerrainSettings;
+    private TerrainSettings jobSystemFullSettings = null;
     [SerializeField]
     [ConditionalHide("renderType", 3)]
-    private TerrainInnerSettings mCubesIndividualJobTerrainSettings;
+    private TerrainSettings jobSystemPartialSettings = null;
 
-    public TerrainInnerSettings Get()
+    public TerrainSettings Get()
     {
         switch (renderType)
         {
-            case RenderType.MarchingCubes:
-                return marchingCubesTerrainSettings;
+            case RenderType.Basic:
+                return basicTerrainSettings;
             case RenderType.ComputeShader:
                 return computeShaderTerrainSettings;
-            case RenderType.MarchingCubesParallelJob:
-                return mCubesParallelJobTerrainSettings;
-            case RenderType.MarchingCubeIndividualJob:
-                return mCubesIndividualJobTerrainSettings;
+            case RenderType.JobSystemFull:
+                return jobSystemFullSettings;
+            case RenderType.JobSystemPartial:
+                return jobSystemPartialSettings;
         }
 
         throw new System.Exception("Error: Unable to generate settings for type: " + renderType);
     }
+}
 
-    [System.Serializable]
-    public class TerrainInnerSettings
-    {
-        //In settings so it can be passed to mesh generators.
-        public readonly int chunkDims = 16;
-        public readonly int halfDims = 8;
+[System.Serializable]
+public class TerrainSettings
+{
+    //In settings so it can be passed to mesh generators.
+    public readonly int chunkDims = 16;
+    public readonly int halfDims = 8;
 
-        //Seed for the noise generator
-        public int seed;
+    //Seed for the noise generator
+    public int seed;
 
-        //The noise maps frequency (aka, Zoom)
-        [Range(0, 1)]
-        public float frequency;
+    //The noise maps frequency (aka, Zoom)
+    [Range(0, 1)]
+    public float frequency;
 
-        [Range(0, 1)]
-        public float clipPercent;
+    [Range(0, 1)]
+    public float clipPercent;
 
-        //Noise Offset
-        public Vector3 offset;
+    //Noise Offset
+    public Vector3 offset;
 
-        [Range(0, 6)]
-        public int minRenderDistance = 1; //How many chunks away from the players current chunk will be forced to render.
-        [Range(1, 10)]
-        public int maxRenderDistance = 6; //
+    [Range(0, 6)]
+    public int minRenderDistance = 1; //How many chunks away from the players current chunk will be forced to render.
+    [Range(1, 10)]
+    public int maxRenderDistance = 6; //
 
-        [Range(1, 10)]
-        public int chunksPerFrame;
+    [Range(1, 10)]
+    public int chunksPerFrame;
 
-    }
+}
 
-    [System.Serializable]
-    public class ComputeShaderTerrainSettings : TerrainInnerSettings
-    {
-        public ComputeShader shader;
-    }
+[System.Serializable]
+public class ComputeShaderTerrainSettings : TerrainSettings
+{
+    public ComputeShader shader;
 }
